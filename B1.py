@@ -2,7 +2,7 @@ from tabulate import tabulate
 
 #filename is the name of the file to be read
 #num is the total number of nodes
-def Task1(filename, num):
+def task1(filename, num):
     try:
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -36,6 +36,6 @@ def Task1(filename, num):
 
         return adj_matrix
 
-
+count = int(input("Enter the Total number of Nodes: "))
 fn = "graph_directed_weighted.txt"
-adjacency_matrix = Task1(fn,10)
+adjacency_matrix = task1(fn,count)
