@@ -13,6 +13,8 @@ def task1(filename):
 
         nodes = cleaned_lines[0].split()
 
+        #Edited by Rabia
+
         adj_matrix = [[0 for _ in range(len(nodes))] for _ in range(len(nodes))]
         node_to_index = {node: i for i, node in enumerate(nodes)}
         for line in cleaned_lines[1:]:
