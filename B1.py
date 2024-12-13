@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 #filename is the name of the file to be read
-def task1(filename):
+def task1(filename, weighted=True, directed=True):
     try:
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -39,8 +39,11 @@ def task1(filename):
 
         #Trying to create a figure from adjacency matrix
         adj_matrix_np = np.array(adj_matrix)
+        if directed:
+            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph if weighted else nx.DiGraph)
+        else:
+            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph if weighted else nx.Graph)
 
-        G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
         mapping = {i: node for i, node in enumerate(nodes)}
         G = nx.relabel_nodes(G, mapping)
 
@@ -67,5 +70,21 @@ def task1(filename):
         return adj_matrix
 
 
-fn = "graph_directed_weighted.txt"
-adjacency_matrix = task1(fn)
+name = input("What is the name of the file? ")
+weighted = input("Is it weighted? ")
+directed = input("Is it directed? ")
+if weighted == "yes" and directed == "yes":
+    fn = f"{name}.txt"
+    adjacency_matrix = task1(fn)
+elif weighted == "yes" and directed == "no":
+    fn = f"{name}.txt"
+    adjacency_matrix = task1(fn, weighted=True, directed=False)
+elif weighted == "no" and directed == "yes":
+    fn = f"{name}.txt"
+    adjacency_matrix = task1(fn, weighted=False, directed=True)
+elif weighted == "no" and directed == "no":
+    fn = f"{name}.txt"
+    adjacency_matrix = task1(fn, weighted=False, directed=False)
+else:
+    print ("Invalid input. Please try again.")
+    exit()
