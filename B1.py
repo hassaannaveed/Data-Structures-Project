@@ -1,4 +1,7 @@
 from tabulate import tabulate
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
 
 #filename is the name of the file to be read
 def task1(filename):
@@ -25,11 +28,41 @@ def task1(filename):
                 adj_matrix[row][col] = weight
         data = []
         for i in range(len(nodes)):
-            data.append([nodes[i]] + adj_matrix[i])
+            for j in range(len(nodes)):
+                # Only consider non-zero weights for edges
+                if adj_matrix[i][j] != 0:
+                    edge_info = f"{nodes[i]} - {nodes[j]}: {adj_matrix[i][j]}"
+                    data.append([edge_info])
 
-        headers = ["Node"] + nodes
+            # Print the formatted output with edges and their weights
+        print(tabulate(data, headers=["Edges : Weights"], tablefmt="fancy_grid"))
 
-        print(tabulate(data, headers=headers, tablefmt="fancy_grid"))
+        #Trying to create a figure from adjacency matrix
+        adj_matrix_np = np.array(adj_matrix)
+
+        G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
+        mapping = {i: node for i, node in enumerate(nodes)}
+        G = nx.relabel_nodes(G, mapping)
+
+        plt.figure(figsize=(10, 8))
+        pos = nx.spring_layout(G)
+        nx.draw(
+            G,
+            pos,
+            with_labels=True,
+            node_color='skyblue',
+            node_size=800,
+            font_size=10,
+            edge_color='black',
+            arrowsize=20
+        )
+
+
+        edge_labels = nx.get_edge_attributes(G, 'weight')
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+
+        plt.title("Directed Weighted Graph Visualization")
+        plt.show()
 
         return adj_matrix
 
