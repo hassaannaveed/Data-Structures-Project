@@ -12,7 +12,7 @@ def task1(filename):
         cleaned_lines = [line for line in lines if line.strip()]
 
         nodes = cleaned_lines[0].split()
-
+        #Mohamed
         #Edited by Hassaan
 
 
