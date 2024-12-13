@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 #filename is the name of the file to be read
-def b1(filename, directed=True, weighted=True):
+def get_matrix(filename):
     try:
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -31,48 +31,31 @@ def b1(filename, directed=True, weighted=True):
         #Output adjacency matrix
         print("Adjacency Matrix:")
         print(adj_matrix)
-
-        #Create a figure from adjacency matrix
-        adj_matrix_np = np.array(adj_matrix)
-        if directed:
-            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
-        else:
-            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph)
-
-        plt.figure(figsize=(10, 8))
-        pos = nx.spring_layout(G)
-        nx.draw(
-            G,
-            pos,
-            with_labels=True,
-            node_color='skyblue',
-            node_size=800,
-            font_size=10,
-            edge_color='black',
-            arrowsize=20
-        )
-
-
-        edge_labels = nx.get_edge_attributes(G, 'weight')
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
-
-        plt.title("Directed Weighted Graph Visualization")
-        plt.show()
-
         return adj_matrix
 
+#Print the graph
+def print_graph(adj_matrix, directed=True, weighted=True):
+    adj_matrix_np = np.array(adj_matrix)
+    if directed:
+        G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
+    else:
+        G = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph)
 
-name = input("What is the name of the file? ")
-directed = input("Is it directed? (yes/no) ")
-weighted = input("Is it weighted? (yes/no) ")
-if directed == "yes" and weighted == "yes":
-    adjacency_matrix = b1(name)
-elif directed == "yes" and weighted == "no":
-    adjacency_matrix = b1(name, True, False)
-elif directed == "no" and weighted == "yes":
-    adjacency_matrix = b1(name, False, True)
-elif directed == "no" and weighted == "no":
-    adjacency_matrix = b1(name, False, False)
-else:
-    print ("Invalid input. Please try again.")
-    exit()
+    plt.figure(figsize=(10, 8))
+    pos = nx.spring_layout(G)
+    nx.draw(
+        G,
+        pos,
+        with_labels=True,
+        node_color='red',
+        node_size=800,
+        font_size=10,
+        edge_color='black',
+        arrowsize=20
+    )
+
+    edge_labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+
+    plt.title("Directed Weighted Graph Visualization")
+    plt.show()
