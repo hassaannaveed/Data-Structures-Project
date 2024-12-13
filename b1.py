@@ -29,8 +29,9 @@ def get_matrix(filename):
                 adj_matrix[row][col] = weight
 
         #Output adjacency matrix
-        print("Adjacency Matrix:")
-        print(adj_matrix)
+        #print("Adjacency Matrix:")
+        #print(adj_matrix)
+
         return adj_matrix
 
 #Print the graph visually
