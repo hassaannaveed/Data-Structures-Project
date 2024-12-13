@@ -33,8 +33,8 @@ def get_matrix(filename):
         print(adj_matrix)
         return adj_matrix
 
-#Print the graph
-def print_graph(adj_matrix, directed=True, weighted=True):
+#Print the graph visually
+def visual_graph(adj_matrix, directed=True, weighted=True):
     adj_matrix_np = np.array(adj_matrix)
     if directed:
         G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
