@@ -26,15 +26,12 @@ def task1(filename, directed=True, weighted=True):
             for col, weight in enumerate(edges):
                 adj_matrix[row][col] = weight
 
-        #Trying to create a figure from adjacency matrix
+        #Create a figure from adjacency matrix
         adj_matrix_np = np.array(adj_matrix)
         if directed:
             G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
         else:
             G = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph)
-
-        mapping = {i: node for i, node in enumerate(nodes)}
-        G = nx.relabel_nodes(G, mapping)
 
         plt.figure(figsize=(10, 8))
         pos = nx.spring_layout(G)
@@ -60,20 +57,16 @@ def task1(filename, directed=True, weighted=True):
 
 
 name = input("What is the name of the file? ")
-directed = input("Is it directed? ")
-weighted = input("Is it weighted? ")
+directed = input("Is it directed? (yes/no) ")
+weighted = input("Is it weighted? (yes/no) ")
 if directed == "yes" and weighted == "yes":
-    fn = f"{name}.txt"
-    adjacency_matrix = task1(fn)
+    adjacency_matrix = task1(name)
 elif directed == "yes" and weighted == "no":
-    fn = f"{name}.txt"
-    adjacency_matrix = task1(fn, True, False)
+    adjacency_matrix = task1(name, True, False)
 elif directed == "no" and weighted == "yes":
-    fn = f"{name}.txt"
-    adjacency_matrix = task1(fn, False, True)
+    adjacency_matrix = task1(name, False, True)
 elif directed == "no" and weighted == "no":
-    fn = f"{name}.txt"
-    adjacency_matrix = task1(fn, False, False)
+    adjacency_matrix = task1(name, False, False)
 else:
     print ("Invalid input. Please try again.")
     exit()
