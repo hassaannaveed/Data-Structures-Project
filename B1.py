@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 #filename is the name of the file to be read
-def task1(filename, weighted=True, directed=True):
+def task1(filename, directed=True, weighted=True):
     try:
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -40,9 +40,9 @@ def task1(filename, weighted=True, directed=True):
         #Trying to create a figure from adjacency matrix
         adj_matrix_np = np.array(adj_matrix)
         if directed:
-            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph if weighted else nx.DiGraph)
+            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
         else:
-            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph if weighted else nx.Graph)
+            G = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph)
 
         mapping = {i: node for i, node in enumerate(nodes)}
         G = nx.relabel_nodes(G, mapping)
@@ -71,20 +71,20 @@ def task1(filename, weighted=True, directed=True):
 
 
 name = input("What is the name of the file? ")
-weighted = input("Is it weighted? ")
 directed = input("Is it directed? ")
-if weighted == "yes" and directed == "yes":
+weighted = input("Is it weighted? ")
+if directed == "yes" and weighted == "yes":
     fn = f"{name}.txt"
     adjacency_matrix = task1(fn)
-elif weighted == "yes" and directed == "no":
+elif directed == "yes" and weighted == "no":
     fn = f"{name}.txt"
-    adjacency_matrix = task1(fn, weighted=True, directed=False)
-elif weighted == "no" and directed == "yes":
+    adjacency_matrix = task1(fn, True, False)
+elif directed == "no" and weighted == "yes":
     fn = f"{name}.txt"
-    adjacency_matrix = task1(fn, weighted=False, directed=True)
-elif weighted == "no" and directed == "no":
+    adjacency_matrix = task1(fn, False, True)
+elif directed == "no" and weighted == "no":
     fn = f"{name}.txt"
-    adjacency_matrix = task1(fn, weighted=False, directed=False)
+    adjacency_matrix = task1(fn, False, False)
 else:
     print ("Invalid input. Please try again.")
     exit()
