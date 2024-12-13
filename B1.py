@@ -3,7 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 #filename is the name of the file to be read
-def task1(filename, directed=True, weighted=True):
+def b1(filename, directed=True, weighted=True):
     try:
         with open(filename, "r") as file:
             lines = file.readlines()
@@ -15,16 +15,22 @@ def task1(filename, directed=True, weighted=True):
 
         nodes = cleaned_lines[0].split()
 
-        adj_matrix = [[0 for _ in range(len(nodes))] for _ in range(len(nodes))]
-        node_to_index = {node: i for i, node in enumerate(nodes)}
+        num_nodes = len(nodes)
+        adj_matrix = np.zeros((num_nodes, num_nodes), dtype=int)
+
+        node_to_index = {node: index for index, node in enumerate(nodes)}
+
         for line in cleaned_lines[1:]:
             parts = line.split()
             node = parts[0]
             edges = list(map(int, parts[1:]))
-
             row = node_to_index[node]
             for col, weight in enumerate(edges):
                 adj_matrix[row][col] = weight
+
+        #Output adjacency matrix
+        print("Adjacency Matrix:")
+        print(adj_matrix)
 
         #Create a figure from adjacency matrix
         adj_matrix_np = np.array(adj_matrix)
@@ -60,13 +66,13 @@ name = input("What is the name of the file? ")
 directed = input("Is it directed? (yes/no) ")
 weighted = input("Is it weighted? (yes/no) ")
 if directed == "yes" and weighted == "yes":
-    adjacency_matrix = task1(name)
+    adjacency_matrix = b1(name)
 elif directed == "yes" and weighted == "no":
-    adjacency_matrix = task1(name, True, False)
+    adjacency_matrix = b1(name, True, False)
 elif directed == "no" and weighted == "yes":
-    adjacency_matrix = task1(name, False, True)
+    adjacency_matrix = b1(name, False, True)
 elif directed == "no" and weighted == "no":
-    adjacency_matrix = task1(name, False, False)
+    adjacency_matrix = b1(name, False, False)
 else:
     print ("Invalid input. Please try again.")
     exit()
