@@ -39,3 +39,17 @@ def task1(filename, num):
 count = int(input("Enter the Total number of Nodes: "))
 fn = "graph_directed_weighted.txt"
 adjacency_matrix = task1(fn,count)
+
+
+def add_point(points_list, type_of_point, name, location): 
+    points_list.append({'type': type_of_point, 'name': name, 'location': location})
+
+def mark_road_closed(city_map, intersection_1, intersection_2): 
+    city_map[intersection_1][intersection_2] = -1  # Closed road 
+    city_map[intersection_2][intersection_1] = -1  # Symmetric road
+
+def mark_flooded_road(city_map, intersection_1, intersection_2): 
+    city_map[intersection_1][intersection_2] = 'boat'  # Flooded road, accessible by boat 
+    city_map[intersection_2][intersection_1] = 'boat'  # Symmetric road
+
+
