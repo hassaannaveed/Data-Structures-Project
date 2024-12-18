@@ -48,7 +48,7 @@ def visual_graph(adj_matrix, directed=True, weighted=True):
         G,
         pos,
         with_labels=True,
-        node_color='red',
+        node_color='yellow',
         node_size=800,
         font_size=10,
         edge_color='black',
