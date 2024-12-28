@@ -1,44 +1,99 @@
 class Graph:
-    def __init__(self, directed=False, weighted=False):
+
+    def __init__(self, directed=False):
+        # Initialize the graph as either directed or undirected
         self.directed = directed
-        self.weighted = weighted
-        self.adjacency_list = {}  # Stores the graph as an adjacency list
+        self.graph = {}
 
     def add_node(self, node):
-        if node not in self.adjacency_list:
-            self.adjacency_list[node] = []
+        if node not in self.graph:
+            self.graph[node] = {'important': False, 'connections': []}
 
-    def add_edge(self, src, dest, weight=1):
-        if self.weighted:
-            edge = (dest, weight)
-        else:
-            edge = dest
+    def add_edge(self, node1, node2, weight=1):
+        if node1 not in self.graph:
+            self.add_node(node1)
+        if node2 not in self.graph:
+            self.add_node(node2)
 
-        self.adjacency_list[src].append(edge)
+        self.graph[node1]['connections'].append((node2, weight))
 
-        if not self.directed:  # For undirected graphs, add the reverse edge
-            reverse_edge = (src, weight) if self.weighted else src
-            self.adjacency_list[dest].append(reverse_edge)
+        # If the graph is undirected, add the reverse edge as well
+        if not self.directed:
+            self.graph[node2]['connections'].append((node1, weight))
+
+    def get_connections(self, node):
+        # Get the connections of a node
+        return self.graph.get(node, {}).get('connections', [])
+
+    def has_edge(self, node1, node2):
+        # Check if there is an edge between node1 and node2
+        for connection, _ in self.graph.get(node1, {}).get('connections', []):
+            if connection == node2:
+                return True
+        return False
+
+    def remove_edge(self, node1, node2):
+        # Remove an edge from node1 to node2
+        if node1 in self.graph:
+            self.graph[node1]['connections'] = [n for n in self.graph[node1]['connections'] if n[0] != node2]
+
+        # For undirected graph, remove the reverse edge
+        if not self.directed and node2 in self.graph:
+            self.graph[node2]['connections'] = [n for n in self.graph[node2]['connections'] if n[0] != node1]
 
     def remove_node(self, node):
-        if node in self.adjacency_list:
-            del self.adjacency_list[node]
-            for edges in self.adjacency_list.values():
-                edges[:] = [edge for edge in edges if edge != node and (isinstance(edge, tuple) and edge[0] != node)]
-
-    def remove_edge(self, src, dest):
-        self.adjacency_list[src] = [
-            edge for edge in self.adjacency_list[src] if edge != dest and (isinstance(edge, tuple) and edge[0] != dest)
-        ]
-        if not self.directed:
-            self.adjacency_list[dest] = [
-                edge for edge in self.adjacency_list[dest] if
-                edge != src and (isinstance(edge, tuple) and edge[0] != src)
-            ]
-
-    def get_neighbors(self, node):
-        return self.adjacency_list.get(node, [])
+        # Remove a node and all its edges
+        if node in self.graph:
+            # Remove edges from other nodes to this node
+            for connections in self.graph.values():
+                connections['connections'] = [n for n in connections['connections'] if n[0] != node]
+            del self.graph[node]
 
     def display(self):
-        for node, edges in self.adjacency_list.items():
-            print(f"{node} -> {edges}")
+        # Display the graph
+        print("Graph:")
+        for node, data in self.graph.items():
+            connection_list = [f"{connection} ({weight})" for connection, weight in data['connections']]
+            important_status = "Important" if data['important'] else "Not Important"
+            print(f"{node}: {', '.join(connection_list)} - {important_status}")
+
+    def add_from_adj_matrix(self, adj_matrix):
+        nodes = [chr(65 + i) for i in range(len(adj_matrix))]
+
+        for node in nodes:
+            self.add_node(node)
+
+        for i in range(len(adj_matrix)):
+            for j in range(len(adj_matrix[i])):
+                if adj_matrix[i][j] != 0:
+                    self.add_edge(nodes[i], nodes[j], adj_matrix[i][j])
+
+    def make_important(self, node):
+        if node in self.graph:
+            self.graph[node]['important'] = True
+            print("The node has been made important.")
+        else:
+            print("The node does not exist.")
+
+    def output_to_file(self, filename="output.txt"):
+
+        nodes = list(self.graph.keys())
+
+        # Initialize an adjacency matrix with zeros
+        adj_matrix = [[0] * len(nodes) for _ in range(len(nodes))]
+
+        # Fill the adjacency matrix with edge weights
+        for i, node1 in enumerate(nodes):
+            for j, node2 in enumerate(nodes):
+                for connection, weight in self.graph[node1]['connections']:
+                    if connection == node2:
+                        adj_matrix[i][j] = weight
+
+        # Write the matrix to a text file
+        with open(filename, "w") as file:
+            # Write node labels in the first row
+            file.write(" ".join(nodes) + "\n")
+
+            # Write the adjacency matrix
+            for row in adj_matrix:
+                file.write(" ".join(map(str, row)) + "\n")
