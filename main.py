@@ -1,5 +1,5 @@
 from b1 import get_matrix, print_matrix, is_directed, is_weighted
-from b2 import Graph
+from b2andf1 import Graph
 
 filename = input("Enter the filename to be read: ")
 adj_matrix = get_matrix(filename)
@@ -23,7 +23,8 @@ while ans=='y':
     print("4. Add a node")
     print("5. Remove a node")
     print("6. Mark a node as important")
-    print("7. Exit")
+    print("7. Show the graph of important nodes only")
+    print("8. Exit")
     print("******************")
 
     choice = input("Enter your choice: ")
@@ -66,6 +67,14 @@ while ans=='y':
         ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '7':
+        if not is_weighted(adj_matrix):
+            print("Graph is unweighted. Cannot show important nodes.")
+            ans = input("Do you want to continue? (y/n): ")
+            continue
+        graph.prim_algo()
+        ans = input("Do you want to continue? (y/n): ")
+
+    elif choice == '8':
         print("Exiting...")
         break
 

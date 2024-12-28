@@ -1,3 +1,6 @@
+from b1 import is_weighted
+
+
 class Graph:
 
     def __init__(self, directed=False):
@@ -97,3 +100,51 @@ class Graph:
             # Write the adjacency matrix
             for row in adj_matrix:
                 file.write(" ".join(map(str, row)) + "\n")
+
+    def prim_algo(self):
+        if self.directed:
+            print("Sorry the Graph is directed")
+            return []
+
+        important_nodes = [node for node, data in self.graph.items() if data['important']]
+        if not important_nodes:
+            print("No important nodes found!")
+            return []
+
+        mst_edges = []
+        visited = set()
+        edges = []
+
+        # Start from the first important node
+        start_node = important_nodes[0]
+        visited.add(start_node)
+
+        # Add all edges of the start node to the candidate edges list
+        for connection, weight in self.graph[start_node]['connections']:
+            if connection in important_nodes:
+                edges.append((weight, start_node, connection))
+
+        # Continue until we have visited all important nodes
+        while edges and len(visited) < len(important_nodes):
+            # Find the edge with the smallest weight
+            edges.sort(key=lambda x: x[0])  # Sort edges by weight
+            weight, node1, node2 = edges.pop(0)  # Select the smallest edge
+
+            if node2 in visited:
+                continue  # Skip if the node is already visited
+
+            # Add the edge to the MST
+            mst_edges.append((node1, node2, weight))
+            visited.add(node2)
+
+            # Add new edges from the newly visited node
+            for connection, edge_weight in self.graph[node2]['connections']:
+                if connection in important_nodes and connection not in visited:
+                    edges.append((edge_weight, node2, connection))
+
+        # Print the MST edges
+        print("MST for important nodes:")
+        for edge in mst_edges:
+            print(f"{edge[0]} --({edge[2]})--> {edge[1]}")
+
+        return mst_edges
