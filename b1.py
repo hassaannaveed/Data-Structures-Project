@@ -18,17 +18,23 @@ def get_matrix(filename):
 
         num_nodes = len(nodes)
 
-        adj_matrix = np.zeros((num_nodes, num_nodes), dtype=int)
+        adj_matrix = [[0 for _ in range(num_nodes)] for _ in range(num_nodes)]
 
-        node_to_index = {node: index for index, node in enumerate(nodes)}
+
+        node_to_index = {}
+        index = 0
+        for i in nodes:
+            node_to_index[i] = index
+            index = index + 1
+
 
         for line in lines[1:]:
             parts = line.split()
             node = parts[0]
-            edges = list(map(int, parts[1:]))
+            edges = [int(weight) for weight in parts[1:]]
             row = node_to_index[node]
-            for col, weight in enumerate(edges):
-                adj_matrix[row][col] = weight
+            for col in range(len(edges)):
+                adj_matrix[row][col] = edges[col]
 
         return adj_matrix
 
@@ -58,39 +64,17 @@ def visual_graph(adj_matrix, directed=True, weighted=True):
     plt.title("Directed Weighted Graph Visualization")
     plt.show()
 
-def print_matrix(adj_matrix):
-    for row in adj_matrix:
-        print(" ".join(map(str, row)))
-
 def is_directed(adj_matrix):
-    return not np.array_equal(adj_matrix, adj_matrix.T)
-
-def is_weighted(adj_matrix):
-    for i in range(len(adj_matrix)):
-        for j in range(len(adj_matrix[i])):
-            if adj_matrix[i][j] > 1:
+    num_nodes = len(adj_matrix)
+    for i in range(num_nodes):
+        for j in range(num_nodes):
+            if adj_matrix[i][j] != adj_matrix[j][i]:
                 return True
     return False
 
-def output_to_file(self, filename = "output.txt"):
-
-        nodes = list(self.graph.keys())
-
-        # Step 2: Initialize an adjacency matrix with zeros
-        adj_matrix = [[0] * len(nodes) for _ in range(len(nodes))]
-
-        # Step 3: Fill the adjacency matrix with edge weights
-        for i, node1 in enumerate(nodes):
-            for j, node2 in enumerate(nodes):
-                for connection, weight in self.graph.get(node1, []):
-                    if connection == node2:
-                        adj_matrix[i][j] = weight
-
-        # Step 4: Write the matrix to a text file
-        with open(filename, "w") as file:
-            # Write node labels in the first row
-            file.write(" ".join(nodes) + "\n")
-
-            # Write the adjacency matrix
-            for row in adj_matrix:
-                file.write(" ".join(map(str, row)) + "\n")
+def is_weighted(adj_matrix):
+    for row in adj_matrix:
+        for weight in row:
+            if weight > 1:
+                return True
+    return False
