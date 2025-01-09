@@ -14,6 +14,7 @@ def get_matrix(filename):
         return None
     else:
 
+
         nodes = lines[0].split()
 
         num_nodes = len(nodes)

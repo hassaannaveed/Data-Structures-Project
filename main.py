@@ -23,6 +23,7 @@ ans = 'y'
 
 total_buses = 0
 
+
 while ans=='y':
     print("***** Menu *****")
     print("1. Display the graph and Output to file")
@@ -166,7 +167,7 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '12':
-        total_buses = int(input("Enter the total number of buses available: "))
+        total_buses = int(input("Enter the total number of buses available (each bus carry 30 people): "))
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
@@ -185,7 +186,8 @@ while ans=='y':
     elif choice == '14':
         evacuation_plan = graph.evacuate(Graph.collection_points, Graph.shelter, total_buses)
 
-    elif choice == '14':
+
+    elif choice == '15':
         print("Exiting...")
         break
 

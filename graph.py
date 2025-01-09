@@ -185,6 +185,8 @@ class Graph:
             else:
                 connections.append((connected_node, weight))
 
+
+
         if found:
             self.graph[node1]['connections'] = connections
             print(f"Edge between {node1} and {node2} has been marked impassable.")
