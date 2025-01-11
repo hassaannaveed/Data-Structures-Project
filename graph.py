@@ -185,8 +185,6 @@ class Graph:
             else:
                 connections.append((connected_node, weight))
 
-
-
         if found:
             self.graph[node1]['connections'] = connections
             print(f"Edge between {node1} and {node2} has been marked impassable.")
@@ -208,48 +206,59 @@ class Graph:
         for connection, weight, capacity in self.graph.get(node1, {}).get('connections', []):
             if connection == node2:
                 return capacity
-        print(f"No edge found between {node1} and {node2}.")
         return None
 
-    def distance_to_nearest_intersection(self, node):
-        distances = {n: 9999999 for n in self.graph}
-        distances[node] = 0
+    def distance_to_nearest_intersection(self, supply_point):
+        if supply_point not in self.graph:
+            print(f"Node {supply_point} does not exist.")
+            return
 
-        visited = set()
-        to_visit = [node]
+        nearest_intersection = None
+        shortest_distance = 999999999999999
+        best_path = []
 
-        while to_visit:
-            current_node = to_visit.pop(0)
+        print(f"\nCalculating distances from supply point: {supply_point}\n")
 
-            if current_node in visited:
-                continue
-            visited.add(current_node)
+        # Iterate through all nodes
+        for node in self.graph:
+            # Check if the node is an intersection
+            if node != supply_point and len(self.graph[node]['connections']) > 1:
+                # Use the pre-defined djikstra function
+                distance, path = self.djikstra(supply_point, node)
 
-            # Check if the current node is an intersection
-            if current_node != node and len(self.graph[current_node]['connections']) > 0:
-                return current_node, distances[current_node]
+                # Update nearest intersection if a shorter path is found
+                if distance < shortest_distance:
+                    nearest_intersection = node
+                    shortest_distance = distance
+                    best_path = path
 
-            # Update distances for neighbors
-            for neighbor, weight in self.graph[current_node]['connections']:
-                if weight > 0 and neighbor not in visited:
-                    new_distance = distances[current_node] + weight
-                    if new_distance < distances[neighbor]:
-                        distances[neighbor] = new_distance
-                        to_visit.append(neighbor)  # Add neighbor to the queue
+                print(f"  {node}: Distance = {distance}, Path = {' -> '.join(path) if path else 'No path'}")
 
-        print(f"No intersections found for supply point {node}.")
-        return
+        # Display the nearest intersection and details
+        if nearest_intersection:
+            print(f"\nNearest intersection: {nearest_intersection}")
+            print(f"Shortest distance: {shortest_distance}")
+            print(f"Path: {' -> '.join(best_path)}")
+        else:
+            print("\nNo intersection found.")
+
 
     def basic_network(self):
+        # Create a new graph with only important nodes
         important_nodes = [
             node for node in self.graph
             if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g']
         ]
+        # Check if there are any important nodes
         passable_graph = {node: [] for node in important_nodes}
         for node in important_nodes:
             for connection, weight in self.graph[node]['connections']:
                 if connection in important_nodes and weight > 0:
                     passable_graph[node].append((connection, weight))
+
+        if not passable_graph:
+            print("No important nodes found.")
+            return []
 
         mst = []
         visited = set()
@@ -280,7 +289,7 @@ class Graph:
 
         return mst
 
-    def dijkstra(self, start_node, target_node):
+    def djikstra(self, start_node, target_node):
         # Min-heap priority queue
         pq = [(0, start_node)]  # (distance, node)
         distances = {node: float('inf') for node in self.graph}
@@ -315,56 +324,93 @@ class Graph:
 
         return distances[target_node], path
 
-    def evacuate(self, collection_points, shelter, buses_available, bus_capacity=30):
-        total_people = len(collection_points) * 100  # Each collection point has 100 people
-        total_buses_needed = total_people // bus_capacity
-        if total_people % bus_capacity > 0:
-            total_buses_needed += 1
+    def evacuate(self, buses_available, bus_capacity=30):
+        # First, find the shelter node in the graph
+        shelter_node = None
+        for node, data in self.graph.items():
+            if data['type_of_node'] == 's':
+                shelter_node = node
+                break
 
-        # Calculate total buses available (adjusted for buses available for each route)
-        total_buses_available = buses_available
+        if not shelter_node:
+            print("No shelter node found.")
+            return
 
-        print(f"Total people to evacuate: {total_people}")
-        print(f"Total buses needed: {total_buses_needed}")
-        print(f"Total buses available: {total_buses_available}")
-
-        # Store evacuation paths and check if roads are sufficient
-        evacuation_plan = {}
-        total_capacity = 0
+        # Step 1: Calculate shortest paths from each collection point to the shelter using Dijkstra's algorithm
+        collection_points = Graph.collection_points
+        shortest_paths = {}
 
         for collection_point in collection_points:
-            distance, path = self.dijkstra(collection_point, shelter)
-            if path:
-                print(
-                    f"Evacuation path from {collection_point} to shelter: {' -> '.join(path)} with distance {distance}")
-                # Calculate the total road capacity for this route
-                route_capacity = min([self.graph[path[i]]['connections'][next(
-                    (j for j, conn in enumerate(self.graph[path[i]]['connections']) if conn[0] == path[i + 1]), None)][
-                                          2]
-                                      for i in range(len(path) - 1)])
-                print(f"Capacity on this route: {route_capacity}")
-                total_capacity += route_capacity
-                evacuation_plan[collection_point] = {'path': path, 'distance': distance, 'capacity': route_capacity}
-            else:
-                print(f"No path found from {collection_point} to shelter.")
+            distance, path = self.djikstra(collection_point, shelter_node)
+            shortest_paths[collection_point] = (distance, path)
+            print(f"Shortest path from {collection_point} to shelter: {path} with distance {distance}")
 
-        # Check if infrastructure is sufficient
-        if total_capacity >= total_buses_needed:
-            print("The existing infrastructure is sufficient to evacuate all people.")
-        else:
-            print("Additional infrastructure is needed to evacuate all people.")
+        # Step 2: Prepare the graph for Ford-Fulkerson
+        # Create a new graph for the Ford-Fulkerson algorithm to find maximum flow
+        capacity_graph = {node: {} for node in self.graph}
 
-        print("\nEvacuation Plan:")
-        for collection_point, plan in evacuation_plan.items():
+        # Populate the capacity graph with the actual capacities
+        for node in self.graph:
+            for connection, weight, capacity in self.graph[node]['connections']:
+                capacity_graph[node][connection] = capacity  # Use capacity, not weight
+
+        # Ford-Fulkerson algorithm (Edmonds-Karp implementation for maximum flow)
+        def bfs(source, sink, parent):
+            visited = {node: False for node in self.graph}
+            queue = [source]
+            visited[source] = True
+
+            while queue:
+                node = queue.pop(0)
+
+                for neighbor in capacity_graph[node]:
+                    if not visited[neighbor] and capacity_graph[node][neighbor] > 0:
+                        queue.append(neighbor)
+                        visited[neighbor] = True
+                        parent[neighbor] = node
+                        if neighbor == sink:
+                            return True
+            return False
+
+        def edmonds_karp(source, sink):
+            total_flow = 0
+            parent = {}
+            while bfs(source, sink, parent):
+                path_flow = float('Inf')
+                s = sink
+                while s != source:
+                    path_flow = min(path_flow, capacity_graph[parent[s]][s])
+                    s = parent[s]
+
+                total_flow += path_flow
+
+                v = sink
+                while v != source:
+                    u = parent[v]
+                    capacity_graph[u][v] -= path_flow
+                    capacity_graph[v][u] += path_flow
+                    v = parent[v]
+
+            return total_flow
+
+        # Step 3: Check the maximum flow from collection points to the shelter
+        total_buses_needed = 0
+        for collection_point in collection_points:
+            # Assume that each path can accommodate `bus_capacity` passengers at a time.
+            flow_capacity = edmonds_karp(collection_point, shelter_node)
+            buses_needed = flow_capacity // bus_capacity
+            if flow_capacity % bus_capacity != 0:
+                buses_needed += 1  # If there's any remainder, we need one more bus
+
+            print(f"From {collection_point}, we can evacuate {flow_capacity} people, requiring {buses_needed} buses.")
+            total_buses_needed += buses_needed
+
+        # Step 4: Check if the number of buses is sufficient
+        if total_buses_needed <= buses_available:
             print(
-                f"{collection_point} -> Path: {' -> '.join(plan['path'])}, Distance: {plan['distance']}, Capacity: {plan['capacity']}")
-
-        return evacuation_plan
-
-
-
-
-
-
-
-
+                f"Evacuation is possible! We need {total_buses_needed} buses and have {buses_available} buses available.")
+            return True
+        else:
+            print(
+                f"Evacuation is not possible. We need {total_buses_needed} buses, but only {buses_available} buses are available.")
+            return False

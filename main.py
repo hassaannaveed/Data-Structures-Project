@@ -2,8 +2,8 @@ from b1 import get_matrix, is_directed, is_weighted
 from graph import Graph
 
 filename = input("Enter the filename to be read: ")
-adj_matrix = get_matrix(filename)
 
+adj_matrix = get_matrix(filename)
 
 if is_directed(adj_matrix) and is_weighted(adj_matrix):
     graph = Graph(directed=True, weighted=True)
@@ -13,6 +13,7 @@ elif not is_directed(adj_matrix) and is_weighted(adj_matrix):
     graph = Graph(directed=False, weighted=True)
 else:
     graph = Graph(directed=False, weighted=False)
+
 
 graph.add_from_adj_matrix(adj_matrix)
 
@@ -117,6 +118,13 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '8':
+        if not graph.weighted:
+            print("Graph is Unweighted. Cannot carry the operation.")
+            ans = input("Do you want to continue? (y/n): ")
+            while ans not in ['y', 'n']:
+                print("Invalid choice. Please try again.")
+                ans = input("Do you want to continue? (y/n): ")
+            continue
         node = input("Enter the supply point to find the nearest intersection: ")
         graph.make_important(node, 's')
         result = graph.distance_to_nearest_intersection(node)
@@ -184,7 +192,7 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '14':
-        evacuation_plan = graph.evacuate(Graph.collection_points, Graph.shelter, total_buses)
+        graph.evacuate(total_buses)
 
 
     elif choice == '15':
