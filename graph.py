@@ -1,16 +1,20 @@
-import heapq
+import heapq # For priority queue operations (used in Dijkstra's algorithm)
+from b1 import get_matrix # Import the `get_matrix` function for reading matrices from a file
+
 
 class Graph:
-
-    deployment_sites = []
-    assembly_points = []
-    shelter = []
-    collection_points = []
 
     def __init__(self, directed=False, weighted=False):
         self.directed = directed
         self.weighted = weighted
         self.graph = {}
+
+        # Initialize the lists for important nodes
+        self.deployment_sites = []
+        self.assembly_points = []
+        self.shelter = []
+        self.collection_points = []
+
 
     def add_node(self, node):
         if node not in self.graph:
@@ -18,7 +22,7 @@ class Graph:
         else:
             print("Node already exists.")
 
-    def add_edge(self, node1, node2, weight=1, capacity=999999999):
+    def add_edge(self, node1, node2, weight=1, capacity=99):
         if node1 not in self.graph:
             self.add_node(node1)
         if node2 not in self.graph:
@@ -131,7 +135,7 @@ class Graph:
                 if adj_matrix[i][j] != 0:
                     self.add_edge(nodes[i], nodes[j], adj_matrix[i][j])
 
-    def make_important(self, node, type_of_site):
+    def set_important(self, node, type_of_site):
         if node not in self.graph:
             print("The node does not exist.")
             return
@@ -141,13 +145,16 @@ class Graph:
             self.graph[node]['type_of_node'] = type_of_site
         else:
             if type_of_site == 'd':
-                Graph.deployment_sites.append(node)
+                self.deployment_sites.append(node)
             elif type_of_site == 'a':
-                Graph.assembly_points.append(node)
+                self.assembly_points.append(node)
             elif type_of_site == 'c':
-                Graph.collection_points.append(node)
-            else:
-                Graph.shelter.append(node)
+                self.collection_points.append(node)
+            elif type_of_site == 'sh':
+                if len(self.shelter) > 0:
+                    print("Shelter already exists.")
+                    return
+                self.shelter.append(node)
 
 
 
@@ -160,7 +167,7 @@ class Graph:
             adj_matrix.append([0] * num_nodes)
 
         for node1 in self.graph:
-            for connection, weight in self.graph[node1]['connections']:
+            for connection, weight, _ in self.graph[node1]['connections']:
                 row = nodes.index(node1)
                 col = nodes.index(connection)
                 adj_matrix[row][col] = weight
@@ -171,7 +178,7 @@ class Graph:
                 row_string = " ".join([str(item) for item in row])
                 file.write(row_string + "\n")
 
-    def mark_impassable(self, node1, node2):
+    def set_impassable(self, node1, node2):
         if node1 not in self.graph:
             print(f"Node {node1} does not exist.")
             return
@@ -207,6 +214,22 @@ class Graph:
             if connection == node2:
                 return capacity
         return None
+
+    def set_capacity_from_file(self, filename):
+        capacity_matrix = get_matrix(filename)
+        num_rows = len(capacity_matrix)
+        for row in capacity_matrix:
+            if len(row) != num_rows:
+                print("Invalid capacity matrix.")
+                return
+
+        nodes = [chr(65 + i) for i in range(len(capacity_matrix))]
+
+        for i in range(len(capacity_matrix)):
+            for j in range(len(capacity_matrix[i])):
+                if capacity_matrix[i][j] > 0:
+                    self.set_capacity(nodes[i], nodes[j], capacity_matrix[i][j])
+
 
     def distance_to_nearest_intersection(self, supply_point):
         if supply_point not in self.graph:
@@ -292,7 +315,7 @@ class Graph:
     def djikstra(self, start_node, target_node):
         # Min-heap priority queue
         pq = [(0, start_node)]  # (distance, node)
-        distances = {node: float('inf') for node in self.graph}
+        distances = {node: 999999999 for node in self.graph}
         distances[start_node] = 0
         prev_nodes = {node: None for node in self.graph}
 
@@ -325,19 +348,17 @@ class Graph:
         return distances[target_node], path
 
     def evacuate(self, buses_available, bus_capacity=30):
-        # First, find the shelter node in the graph
-        shelter_node = None
-        for node, data in self.graph.items():
-            if data['type_of_node'] == 's':
-                shelter_node = node
-                break
 
-        if not shelter_node:
+        # First, find the shelter node in the graph
+
+        if not self.shelter:
             print("No shelter node found.")
             return
 
+        shelter_node = self.shelter[0] # Assume there's only one shelter node
+
         # Step 1: Calculate shortest paths from each collection point to the shelter using Dijkstra's algorithm
-        collection_points = Graph.collection_points
+        collection_points = self.collection_points
         shortest_paths = {}
 
         for collection_point in collection_points:
@@ -376,7 +397,7 @@ class Graph:
             total_flow = 0
             parent = {}
             while bfs(source, sink, parent):
-                path_flow = float('Inf')
+                path_flow = 999999999
                 s = sink
                 while s != source:
                     path_flow = min(path_flow, capacity_graph[parent[s]][s])

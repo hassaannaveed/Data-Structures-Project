@@ -102,7 +102,7 @@ while ans=='y':
         while site_type not in ['d', 'a', 's', 'r', 'h', 'g', 'sh']:
             print("Invalid choice. Please try again.")
             site_type = input("Enter d for deployment site, a for assembly point, s for supply point, r for rescue station, h for hospital, g for Govt. building: ")
-        graph.make_important(node, site_type)
+        graph.set_important(node, site_type)
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
@@ -111,7 +111,7 @@ while ans=='y':
     elif choice == '7':
         node1 = input("Enter the starting node: ")
         node2 = input("Enter the ending node: ")
-        graph.mark_impassable(node1, node2)
+        graph.set_impassable(node1, node2)
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
@@ -126,7 +126,7 @@ while ans=='y':
                 ans = input("Do you want to continue? (y/n): ")
             continue
         node = input("Enter the supply point to find the nearest intersection: ")
-        graph.make_important(node, 's')
+        graph.set_important(node, 's')
         result = graph.distance_to_nearest_intersection(node)
         if result:
             nearest_node, distance = result
@@ -157,7 +157,7 @@ while ans=='y':
 
     elif choice == '10':
         node = input("Enter the collection point for evacuation: ")
-        graph.make_important(node, 'c')
+        graph.set_important(node, 'c')
         print(f"{node} has been set as the evacuation point.")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -184,7 +184,7 @@ while ans=='y':
 
     elif choice == '13':
         node = input("Enter the node to be marked as a safe emergency shelter: ")
-        graph.make_important(node, 'sh')
+        graph.set_important(node, 'sh')
         print(f"{node} has been marked as a safe emergency shelter.")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
