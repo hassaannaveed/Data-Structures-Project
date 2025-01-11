@@ -51,6 +51,7 @@ while ans=='y':
         print("Note: Negative weights represent flooded roads.")
         graph.display()
         graph.output_to_file()
+        print("Graph has been written to a file successfully.")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
