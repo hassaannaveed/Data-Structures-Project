@@ -38,6 +38,7 @@ while ans=='y':
     print("9. Show the graph of important nodes only")
     print("10. Enter a collection point for evacuation")
     print("11. Enter the capacity of a road")
+    print("12. Enter the capacity of all nodes through a file")
     print ("12. Enter the Total number of buses available")
     print("13. Mark the Node as a Safe Emergency Shelter")
     print("14. Evaluate the evacuation plan")
@@ -175,6 +176,14 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '12':
+        filename = input("Enter the filename to read the capacity of all nodes: ")
+        graph.set_capacity_from_file(filename)
+        ans = input("Do you want to continue? (y/n): ")
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+            ans = input("Do you want to continue? (y/n): ")
+
+    elif choice == '13':
         total_buses = int(input("Enter the total number of buses available (each bus carry 30 people): "))
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -182,7 +191,7 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
 
-    elif choice == '13':
+    elif choice == '14':
         node = input("Enter the node to be marked as a safe emergency shelter: ")
         graph.set_important(node, 'sh')
         print(f"{node} has been marked as a safe emergency shelter.")
@@ -191,11 +200,11 @@ while ans=='y':
             print("Invalid choice. Please try again.")
             ans = input("Do you want to continue? (y/n): ")
 
-    elif choice == '14':
+    elif choice == '15':
         graph.evacuate(total_buses)
 
 
-    elif choice == '15':
+    elif choice == '16':
         print("Exiting...")
         break
 
