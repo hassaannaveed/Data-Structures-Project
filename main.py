@@ -38,7 +38,7 @@ while ans=='y':
     print("9. Show the graph of important nodes only")
     print("10. Enter a collection point for evacuation")
     print("11. Enter the capacity of a road")
-    print ("12. Enter the Total number of busses available")
+    print ("12. Enter the Total number of buses available")
     print("13. Mark the Node as a Safe Emergency Shelter")
     print("14. Evaluate the evacuation plan")
     print("15. Exit")
