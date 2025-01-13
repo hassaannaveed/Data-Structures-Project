@@ -44,8 +44,7 @@ while ans=='y':
     print("10. Enter a collection point for evacuation")
     print("11. Enter the capacity of a road")
     print("12. Enter the capacity of all nodes through a file")
-    print ("12. Enter the Total number of buses available")
-    print("13. Mark the Node as a Safe Emergency Shelter")
+    print ("13. Enter the Total number of buses available")
     print("14. Evaluate the evacuation plan")
     print("15. Exit")
     print("******************")
@@ -105,7 +104,7 @@ while ans=='y':
 
     elif choice == '6':
         node = input("Enter the node to be marked as important: ")
-        site_type = input("Enter d for deployment site, a for assembly point, s for supply point, r for rescue station, h for hospital, g for Govt. building: ")
+        site_type = input("Enter d for deployment site, a for assembly point, s for supply point, r for rescue station, h for hospital, g for Govt. building, sh for shelter: ")
         while site_type not in ['d', 'a', 's', 'r', 'h', 'g', 'sh']:
             print("Invalid choice. Please try again.")
             site_type = input("Enter d for deployment site, a for assembly point, s for supply point, r for rescue station, h for hospital, g for Govt. building: ")
@@ -196,21 +195,11 @@ while ans=='y':
             print("Invalid choice. Please try again.")
             ans = input("Do you want to continue? (y/n): ")
 
-
     elif choice == '14':
-        node = input("Enter the node to be marked as a safe emergency shelter: ")
-        graph.set_important(node, 'sh')
-        print(f"{node} has been marked as a safe emergency shelter.")
-        ans = input("Do you want to continue? (y/n): ")
-        while ans not in ['y', 'n']:
-            print("Invalid choice. Please try again.")
-            ans = input("Do you want to continue? (y/n): ")
-
-    elif choice == '15':
         graph.evacuate(total_buses)
 
 
-    elif choice == '16':
+    elif choice == '15':
         print("Exiting...")
         break
 

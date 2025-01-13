@@ -1,4 +1,6 @@
 import heapq # For priority queue operations (used in Dijkstra's algorithm)
+
+
 from b1 import get_matrix # Import the `get_matrix` function for reading matrices from a file
 
 
@@ -151,9 +153,6 @@ class Graph:
             elif type_of_site == 'c':
                 self.collection_points.append(node)
             elif type_of_site == 'sh':
-                if len(self.shelter) > 0:
-                    print("Shelter already exists.")
-                    return
                 self.shelter.append(node)
 
 
@@ -270,18 +269,36 @@ class Graph:
         # Create a new graph with only important nodes
         important_nodes = [
             node for node in self.graph
-            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g']
+            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or node in self.assembly_points or node in self.shelter or node in self.collection_points # Add all important nodes
         ]
         # Check if there are any important nodes
-        passable_graph = {node: [] for node in important_nodes}
-        for node in important_nodes:
-            for connection, weight, _ in self.graph[node]['connections']:
-                if connection in important_nodes and weight > 0:
-                    passable_graph[node].append((connection, weight))
-
-        if not passable_graph:
+        if not important_nodes:
             print("No important nodes found.")
             return []
+        # Initialize passable graph for important nodes
+        passable_graph = {node: [] for node in important_nodes}
+
+        # Iterate through all pairs of important nodes
+        for node1 in important_nodes:
+            #Checks every node in the graph
+            for node2 in self.graph:
+                if node1 == node2:
+                    continue  # Skip self-loops
+
+                direct_connection = False
+                #check the connections of the node
+                for connection, weight, _ in self.graph[node1]['connections']:
+                    if connection == node2 and weight > 0:  # Ensure positive weight for passable connections
+                        passable_graph[node1].append((node2, weight))
+                        direct_connection = True
+                        break  # No need to continue checking for this pair
+
+                        # If no direct connection exists, use Dijkstra to find the shortest path
+                    if not direct_connection:
+                        result = self.djikstra(node1, node2)
+                        if result:  # If a path exists
+                            distance, _ = result
+                            passable_graph[node1].append((node2, distance))
 
         mst = []
         visited = set()
@@ -306,6 +323,7 @@ class Graph:
             else:
                 continue
 
+        # Check if all important nodes are connected
         if len(visited) != len(important_nodes):
             print("Graph is not fully connected")
             return []
@@ -321,7 +339,7 @@ class Graph:
 
         while pq:
             current_dist, current_node = heapq.heappop(pq)
-
+            # Skip processing if a better distance is already found
             if current_dist > distances[current_node]:
                 continue
 
@@ -335,6 +353,9 @@ class Graph:
                     distances[neighbor] = new_dist
                     prev_nodes[neighbor] = current_node
                     heapq.heappush(pq, (new_dist, neighbor))
+
+        if distances[target_node] == 999999999:
+            return None
 
         # Reconstruct the path from start to target node
         path = []

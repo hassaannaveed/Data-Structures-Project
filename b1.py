@@ -37,17 +37,17 @@ def get_matrix(filename):
     return adj_matrix
 
 
-def visual_graph(adj_matrix, directed=True, weighted=True):
+def visual_graph(adj_matrix, directed=True):
     adj_matrix_np = np.array(adj_matrix)
     if directed:
-        G = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
+        g = nx.from_numpy_array(adj_matrix_np, create_using=nx.DiGraph)
     else:
-        G = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph)
+        g = nx.from_numpy_array(adj_matrix_np, create_using=nx.Graph)
 
     plt.figure(figsize=(10, 8))
-    pos = nx.spring_layout(G)
+    pos = nx.spring_layout(g)
     nx.draw(
-        G,
+        g,
         pos,
         with_labels=True,
         node_color='yellow',
@@ -57,8 +57,8 @@ def visual_graph(adj_matrix, directed=True, weighted=True):
         arrowsize=20
     )
 
-    edge_labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+    edge_labels = nx.get_edge_attributes(g, 'weight')
+    nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, font_size=8)
 
     plt.title("Directed Weighted Graph Visualization")
     plt.show()
