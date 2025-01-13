@@ -5,6 +5,11 @@ filename = input("Enter the filename to be read: ")
 
 adj_matrix = get_matrix(filename)
 
+# Check if the adjacency matrix is None (i.e., file not found or error reading file)
+if adj_matrix is None:
+    print("Exiting...")
+    exit()
+
 if is_directed(adj_matrix) and is_weighted(adj_matrix):
     graph = Graph(directed=True, weighted=True)
 elif is_directed(adj_matrix) and not is_weighted(adj_matrix):

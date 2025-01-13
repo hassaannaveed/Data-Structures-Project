@@ -275,7 +275,7 @@ class Graph:
         # Check if there are any important nodes
         passable_graph = {node: [] for node in important_nodes}
         for node in important_nodes:
-            for connection, weight in self.graph[node]['connections']:
+            for connection, weight, _ in self.graph[node]['connections']:
                 if connection in important_nodes and weight > 0:
                     passable_graph[node].append((connection, weight))
 
