@@ -143,8 +143,6 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '9':
-        if graph.directed:
-            print("Graph is Directed. Cannot carry the operation.")
         if not graph.weighted:
             print("Graph is Unweighted. Cannot carry the operation.")
             ans = input("Do you want to continue? (y/n): ")

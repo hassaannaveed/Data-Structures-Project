@@ -289,7 +289,7 @@ class Graph:
                         direct_connection = True
                         break  # No need to continue checking for this pair
 
-                        # If no direct connection exists, use Dijkstra to find the shortest path
+                    # If no direct connection exists, use Dijkstra to find the shortest path
                     if not direct_connection:
                         result = self.djikstra(node1, node2)
                         if result:  # If a path exists
