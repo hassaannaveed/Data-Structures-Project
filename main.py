@@ -1,4 +1,4 @@
-from b1 import get_matrix, is_directed, is_weighted
+from basic import get_matrix, is_directed, is_weighted
 from graph import Graph
 
 filename = input("Enter the filename to be read: ")
