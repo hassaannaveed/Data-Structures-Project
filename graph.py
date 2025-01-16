@@ -1,6 +1,4 @@
 import heapq # For priority queue operations (used in Dijkstra's algorithm)
-
-
 from b1 import get_matrix # Import the `get_matrix` function for reading matrices from a file
 
 
@@ -280,10 +278,8 @@ class Graph:
 
         # Iterate through all pairs of important nodes
         for node1 in important_nodes:
-            #Checks every node in the graph
-            for node2 in self.graph:
-                if node1 == node2:
-                    continue  # Skip self-loops
+            #Checks every other important node in the graph
+            for node2 in important_nodes:
 
                 direct_connection = False
                 #check the connections of the node
