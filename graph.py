@@ -1,5 +1,5 @@
 import heapq # For priority queue operations (used in Dijkstra's algorithm)
-from b1 import get_matrix # Import the `get_matrix` function for reading matrices from a file
+from basic import get_matrix # Import the `get_matrix` function for reading matrices from a file
 
 
 class Graph:
@@ -179,10 +179,13 @@ class Graph:
         if node1 not in self.graph:
             print(f"Node {node1} does not exist.")
             return
+        if node2 not in self.graph:
+            print(f"Node {node2} does not exist.")
+            return
 
         connections = []
         found = False
-        for connected_node, weight in self.graph[node1]['connections']:
+        for connected_node, weight, _ in self.graph[node1]['connections']:
             if connected_node == node2 and weight > 0:
                 connections.append((connected_node, -weight))
                 found = True
@@ -199,7 +202,7 @@ class Graph:
         # If the graph is undirected, do the same for the reverse connection
         if not self.directed:
             connections = []
-            for connected_node, weight in self.graph[node2]['connections']:
+            for connected_node, weight, _ in self.graph[node2]['connections']:
                 if connected_node == node1 and weight > 0:
                     connections.append((connected_node, -weight))
                 else:
@@ -366,89 +369,91 @@ class Graph:
 
     def evacuate(self, buses_available, bus_capacity=30):
 
-        # First, find the shelter node in the graph
+        # Assuming that every collection point ahs 100 people to evacuate
+        total_people = 100 * len(self.collection_points)
+        if (buses_available * bus_capacity) < total_people:
+            more_buses_needed = ((total_people - (buses_available * bus_capacity)) % bus_capacity) + 1
 
-        if not self.shelter:
-            print("No shelter node found.")
-            return
 
-        shelter_node = self.shelter[0] # Assume there's only one shelter node
-
-        # Step 1: Calculate shortest paths from each collection point to the shelter using Dijkstra's algorithm
-        collection_points = self.collection_points
-        shortest_paths = {}
-
-        for collection_point in collection_points:
-            distance, path = self.djikstra(collection_point, shelter_node)
-            shortest_paths[collection_point] = (distance, path)
-            print(f"Shortest path from {collection_point} to shelter: {path} with distance {distance}")
-
-        # Step 2: Prepare the graph for Ford-Fulkerson
-        # Create a new graph for the Ford-Fulkerson algorithm to find maximum flow
-        capacity_graph = {node: {} for node in self.graph}
-
-        # Populate the capacity graph with the actual capacities
+        # Create a new graph for the flow problem
+        flow_graph = {}
         for node in self.graph:
+            flow_graph[node] = {}
             for connection, weight, capacity in self.graph[node]['connections']:
-                capacity_graph[node][connection] = capacity  # Use capacity, not weight
+                if weight >= 0:  # Only consider passable roads
+                    flow_graph[node][connection] = capacity
 
-        # Ford-Fulkerson algorithm (Edmonds-Karp implementation for maximum flow)
-        def bfs(source, sink, parent):
-            visited = {node: False for node in self.graph}
+        # Add super-source and super-sink
+        super_source = "SuperSource"
+        super_sink = "SuperSink"
+
+        flow_graph[super_source] = {}
+        flow_graph[super_sink] = {}
+
+        # Connect super-source to all collection points
+        for collection_point in self.collection_points:
+            flow_graph[super_source][collection_point] = float('inf')  # Unlimited capacity from super-source
+
+        # Connect all shelters to the super-sink
+        for shelter_point in self.shelter:
+            if shelter_point not in flow_graph:
+                flow_graph[shelter_point] = {}
+            flow_graph[shelter_point][super_sink] = float('inf')  # Unlimited capacity to super-sink
+
+        # Helper function: BFS to find an augmenting path
+        def bfs(residual_graph, source, sink, parent):
+            visited = set()
             queue = [source]
-            visited[source] = True
+            visited.add(source)
 
             while queue:
-                node = queue.pop(0)
+                current_node = queue.pop(0)
 
-                for neighbor in capacity_graph[node]:
-                    if not visited[neighbor] and capacity_graph[node][neighbor] > 0:
+                for neighbor,capacity in residual_graph[current_node].items():
+                    if neighbor not in visited and capacity > 0:  # Unvisited and has capacity
                         queue.append(neighbor)
-                        visited[neighbor] = True
-                        parent[neighbor] = node
+                        visited.add(neighbor)
+                        parent[neighbor] = current_node
+
                         if neighbor == sink:
                             return True
             return False
 
-        def edmonds_karp(source, sink):
-            total_flow = 0
+        # Ford-Fulkerson method to calculate max flow
+        def ford_fulkerson(graph, source, sink):
+            residual_graph = {node: edges.copy() for node, edges in graph.items()}
             parent = {}
-            while bfs(source, sink, parent):
-                path_flow = 999999999
-                s = sink
-                while s != source:
-                    path_flow = min(path_flow, capacity_graph[parent[s]][s])
-                    s = parent[s]
+            max_flow = 0
 
-                total_flow += path_flow
+            while bfs(residual_graph, source, sink, parent):
+                # Find the bottleneck capacity along the path found by BFS
+                path_flow = float('inf')
+                current_node = sink
 
-                v = sink
-                while v != source:
-                    u = parent[v]
-                    capacity_graph[u][v] -= path_flow
-                    capacity_graph[v][u] += path_flow
-                    v = parent[v]
+                while current_node != source:
+                    path_flow = min(path_flow, residual_graph[parent[current_node]][current_node])
+                    current_node = parent[current_node]
 
-            return total_flow
+                # Update residual capacities of the edges and reverse edges
+                current_node = sink
+                while current_node != source:
+                    prev_node = parent[current_node]
+                    residual_graph[prev_node][current_node] -= path_flow
+                    if current_node not in residual_graph:
+                        residual_graph[current_node] = {}
+                    residual_graph[current_node][prev_node] = residual_graph[current_node].get(prev_node, 0) + path_flow
+                    current_node = prev_node
 
-        # Step 3: Check the maximum flow from collection points to the shelter
-        total_buses_needed = 0
-        for collection_point in collection_points:
-            # Assume that each path can accommodate `bus_capacity` passengers at a time.
-            flow_capacity = edmonds_karp(collection_point, shelter_node)
-            buses_needed = flow_capacity // bus_capacity
-            if flow_capacity % bus_capacity != 0:
-                buses_needed += 1  # If there's any remainder, we need one more bus
+                max_flow += path_flow
 
-            print(f"From {collection_point}, we can evacuate {flow_capacity} people, requiring {buses_needed} buses.")
-            total_buses_needed += buses_needed
+            return max_flow
 
-        # Step 4: Check if the number of buses is sufficient
-        if total_buses_needed <= buses_available:
-            print(
-                f"Evacuation is possible! We need {total_buses_needed} buses and have {buses_available} buses available.")
+        # Calculate max flow
+        max_flow = ford_fulkerson(flow_graph, super_source, super_sink)
+
+        # Check if the maximum flow is enough to evacuate all people
+        if max_flow >= total_people:
             return True
         else:
-            print(
-                f"Evacuation is not possible. We need {total_buses_needed} buses, but only {buses_available} buses are available.")
+            print(f"{more_buses_needed} more buses are needed to evacuate all people.")
             return False

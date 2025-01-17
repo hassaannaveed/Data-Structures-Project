@@ -38,7 +38,7 @@ while ans=='y':
     print("4. Add a node")
     print("5. Remove a node")
     print("6. Mark a node as important")
-    print("7. Mark an edge as impassable")
+    print("7. Mark an edge as impassable/flooded")
     print("8. Find the nearest intersection to a supply point")
     print("9. Show the graph of important nodes only")
     print("10. Enter a collection point for evacuation")
@@ -195,7 +195,6 @@ while ans=='y':
 
     elif choice == '14':
         graph.evacuate(total_buses)
-
 
     elif choice == '15':
         print("Exiting...")
