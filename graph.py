@@ -99,7 +99,7 @@ class Graph:
         displayed_edges = set()  # To track edges in undirected graphs and prevent duplication
 
         for node, data in self.graph.items():
-            node_type = None
+            # Determine the type of node
             if data['type_of_node'] == 's':
                 node_type = "Supply Point"
             elif data['type_of_node'] == 'r':
@@ -108,20 +108,26 @@ class Graph:
                 node_type = "Hospital"
             elif data['type_of_node'] == 'g':
                 node_type = "Govt. Building"
+            else:
+                node_type = None
 
             connections = []
-            for connection, weight, capacity in data['connections']:
+            for connection_data in data['connections']:
+                connection, weight, capacity = connection_data
                 if self.directed:
                     # For directed graphs, add the edge directly
-                    connections.append(f"{connection} (Weight: {weight}), Capacity: {capacity})")
+                    connections.append(f"{connection} (Weight: {weight}, Capacity: {capacity})")
                 else:
                     # For undirected graphs, avoid duplicate edges
                     edge = tuple(sorted([node, connection]))
                     if edge not in displayed_edges:
-                        connections.append(f"{connection} (Weight: {weight}), Capacity: {capacity})")
+                        connections.append(f"{connection} (Weight: {weight}, Capacity: {capacity})")
                         displayed_edges.add(edge)
 
+            # Prepare connections data for output
             connections_data = ", ".join(connections) if connections else "No connections"
+
+            # Print node and its connections
             if node_type is not None:
                 print(f"{node} ({node_type}): {connections_data}")
             else:
@@ -195,12 +201,12 @@ class Graph:
 
         connections = []
         found = False
-        for connected_node, weight, _ in self.graph[node1]['connections']:
+        for connected_node, weight, capacity in self.graph[node1]['connections']:
             if connected_node == node2 and weight > 0:
-                connections.append((connected_node, -weight))
+                connections.append((connected_node, -weight, capacity))
                 found = True
             else:
-                connections.append((connected_node, weight))
+                connections.append((connected_node, weight, capacity))
 
         if found:
             self.graph[node1]['connections'] = connections
@@ -212,11 +218,11 @@ class Graph:
         # If the graph is undirected, do the same for the reverse connection
         if not self.directed:
             connections = []
-            for connected_node, weight, _ in self.graph[node2]['connections']:
+            for connected_node, weight, capacity in self.graph[node2]['connections']:
                 if connected_node == node1 and weight > 0:
-                    connections.append((connected_node, -weight))
+                    connections.append((connected_node, -weight, capacity))
                 else:
-                    connections.append((connected_node, weight))
+                    connections.append((connected_node, weight, capacity))
             self.graph[node2]['connections'] = connections
 
     def get_capacity(self, node1, node2):
@@ -444,12 +450,14 @@ class Graph:
                 # Update residual capacities of the edges and reverse edges
                 current_node = sink
                 while current_node != source:
-                    prev_node = parent[current_node]
-                    residual_graph[prev_node][current_node] -= path_flow
+                    prev = parent[current_node]
+                    residual_graph[prev][current_node] -= path_flow
                     if current_node not in residual_graph:
                         residual_graph[current_node] = {}
-                    residual_graph[current_node][prev_node] = residual_graph[current_node].get(prev_node, 0) + path_flow
-                    current_node = prev_node
+                    if prev not in residual_graph[current_node]:
+                        residual_graph[current_node][prev] = 0
+                    residual_graph[current_node][prev] += path_flow
+                    current_node = prev
 
                 max_flow += path_flow
 
@@ -458,11 +466,15 @@ class Graph:
         # Calculate max flow
         max_flow = edmonds_karp(flow_graph, super_source, super_sink)
 
+        # Output the evacuation details
+        print(f"Total people to evacuate: {total_people}")
+        print(f"Maximum transport capacity: {max_transport_capacity}")
+        print(f"Maximum flow (people evacuated): {max_flow}")
+
         # Check if evacuation is possible
-        if total_people <= max_transport_capacity and max_flow >= total_people:
-            return True
+        if max_flow >= total_people:
+            print("Evacuation successful. All people can be evacuated.")
         else:
-            if total_people > max_transport_capacity:
-                more_buses_needed = (total_people - max_transport_capacity + bus_capacity - 1) // bus_capacity
-                print(f"{more_buses_needed} more buses are needed to evacuate all people.")
-            return False
+            print("Evacuation not successful. Not enough capacity to evacuate everyone.")
+
+        return max_flow

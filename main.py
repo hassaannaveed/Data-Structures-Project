@@ -66,7 +66,16 @@ while ans=='y':
         node2 = input("Enter the ending node: ")
         weight = int(input("Enter the weight (or enter 1 if unweighted): "))
 
+        if not graph.weighted and weight != 1:
+            print("Graph is Unweighted. Cannot carry the operation.")
+            ans = input("Do you want to continue? (y/n): ")
+            while ans not in ['y', 'n']:
+                print("Invalid choice. Please try again.")
+                ans = input("Do you want to continue? (y/n): ")
+            continue
+
         graph.add_edge(node1, node2, weight)
+
 
         print(f"Edge between {node1} and {node2} has been added.")
         ans = input("Do you want to continue? (y/n): ")
@@ -194,11 +203,8 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '14':
-        evacuation_possible = graph.evacuate(total_buses)
-        if evacuation_possible:
-            print("Evacuation is possible using current infrastructure.")
-        else:
-            print("Evacuation is not possible using current infrastructure.")
+        graph.evacuate(total_buses)
+
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
