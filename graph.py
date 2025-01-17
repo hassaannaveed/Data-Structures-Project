@@ -371,8 +371,6 @@ class Graph:
 
         # Assuming that every collection point ahs 100 people to evacuate
         total_people = 100 * len(self.collection_points)
-        if (buses_available * bus_capacity) < total_people:
-            more_buses_needed = ((total_people - (buses_available * bus_capacity)) % bus_capacity) + 1
 
 
         # Create a new graph for the flow problem
@@ -455,5 +453,9 @@ class Graph:
         if max_flow >= total_people:
             return True
         else:
-            print(f"{more_buses_needed} more buses are needed to evacuate all people.")
-            return False
+            if (buses_available * bus_capacity) < total_people:
+                more_buses_needed = ((total_people - (buses_available * bus_capacity)) % bus_capacity) + 1
+                print(f"{more_buses_needed} more buses are needed to evacuate all people.")
+                return False
+            else:
+                return False
