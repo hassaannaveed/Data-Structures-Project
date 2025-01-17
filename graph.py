@@ -23,6 +23,16 @@ class Graph:
             print("Node already exists.")
 
     def add_edge(self, node1, node2, weight=1, capacity=99):
+        """
+            Adds an edge between two nodes with an optional weight and capacity.
+            If the graph is undirected, the edge is bidirectional.
+
+            Args:
+                node1 (str): The starting node.
+                node2 (str): The ending node.
+                weight (int): The weight of the edge (default is 1).
+                capacity (int): The capacity of the edge (default is 99).
+            """
         if node1 not in self.graph:
             self.add_node(node1)
         if node2 not in self.graph:
@@ -368,10 +378,9 @@ class Graph:
         return distances[target_node], path
 
     def evacuate(self, buses_available, bus_capacity=30):
-
-        # Assuming that every collection point ahs 100 people to evacuate
+        # Assuming that every collection point has 100 people to evacuate
         total_people = 100 * len(self.collection_points)
-
+        max_transport_capacity = buses_available * bus_capacity
 
         # Create a new graph for the flow problem
         flow_graph = {}
@@ -398,7 +407,7 @@ class Graph:
                 flow_graph[shelter_point] = {}
             flow_graph[shelter_point][super_sink] = float('inf')  # Unlimited capacity to super-sink
 
-        # Helper function: BFS to find an augmenting path
+        # Helper function: BFS for finding augmenting paths in Edmonds-Karp
         def bfs(residual_graph, source, sink, parent):
             visited = set()
             queue = [source]
@@ -407,7 +416,7 @@ class Graph:
             while queue:
                 current_node = queue.pop(0)
 
-                for neighbor,capacity in residual_graph[current_node].items():
+                for neighbor, capacity in residual_graph[current_node].items():
                     if neighbor not in visited and capacity > 0:  # Unvisited and has capacity
                         queue.append(neighbor)
                         visited.add(neighbor)
@@ -417,8 +426,8 @@ class Graph:
                             return True
             return False
 
-        # Ford-Fulkerson method to calculate max flow
-        def ford_fulkerson(graph, source, sink):
+        # Edmonds-Karp implementation for maximum flow
+        def edmonds_karp(graph, source, sink):
             residual_graph = {node: edges.copy() for node, edges in graph.items()}
             parent = {}
             max_flow = 0
@@ -447,15 +456,13 @@ class Graph:
             return max_flow
 
         # Calculate max flow
-        max_flow = ford_fulkerson(flow_graph, super_source, super_sink)
+        max_flow = edmonds_karp(flow_graph, super_source, super_sink)
 
-        # Check if the maximum flow is enough to evacuate all people
-        if max_flow >= total_people:
+        # Check if evacuation is possible
+        if total_people <= max_transport_capacity and max_flow >= total_people:
             return True
         else:
-            if (buses_available * bus_capacity) < total_people:
-                more_buses_needed = ((total_people - (buses_available * bus_capacity)) % bus_capacity) + 1
+            if total_people > max_transport_capacity:
+                more_buses_needed = (total_people - max_transport_capacity + bus_capacity - 1) // bus_capacity
                 print(f"{more_buses_needed} more buses are needed to evacuate all people.")
-                return False
-            else:
-                return False
+            return False

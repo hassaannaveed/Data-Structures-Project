@@ -194,7 +194,15 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '14':
-        graph.evacuate(total_buses)
+        evacuation_possible = graph.evacuate(total_buses)
+        if evacuation_possible:
+            print("Evacuation is possible using current infrastructure.")
+        else:
+            print("Evacuation is not possible using current infrastructure.")
+        ans = input("Do you want to continue? (y/n): ")
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+            ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '15':
         print("Exiting...")
