@@ -1,7 +1,6 @@
 import heapq # For priority queue operations (used in Dijkstra's algorithm)
 from basic import get_matrix # Import the `get_matrix` function for reading matrices from a file
 
-
 class Graph:
 
     def __init__(self, directed=False, weighted=False):
@@ -9,11 +8,24 @@ class Graph:
         self.weighted = weighted
         self.graph = {}
 
+
         # Initialize the lists for important nodes
         self.deployment_sites = []
         self.assembly_points = []
         self.shelter = []
         self.collection_points = []
+
+        #variables
+        self.total_policemen = 0
+        self.total_firefighters = 0
+        self.total_medics = 0
+
+        self.staging_personnel = []  # To store emergency services personnel
+        self.deployed_personnel = {site: {'policemen': 0, 'firefighters': 0, 'medics': 0} for site in self.deployment_sites}
+        self.waiting_for_personnel = {site: {'policemen': 0, 'firefighters': 0, 'medics': 0} for site in
+                                   self.deployment_sites}
+
+
 
 
     def add_node(self, node):
@@ -59,7 +71,7 @@ class Graph:
 
 
         if not self.directed:
-            for connection in self.graph[node2]['connections']:
+            for connection  in self.graph[node2]['connections']:
                 if connection[0] == node1:
                     connection_index = self.graph[node2]['connections'].index(connection)
                     self.graph[node2]['connections'][connection_index] = (connection[0], connection[1], capacity)
@@ -299,12 +311,16 @@ class Graph:
         for node1 in important_nodes:
             #Checks every other important node in the graph
             for node2 in important_nodes:
+                if node1 == node2:
+                    continue  # Skip self-loops
 
                 direct_connection = False
                 #check the connections of the node
                 for connection, weight, _ in self.graph[node1]['connections']:
                     if connection == node2 and weight > 0:  # Ensure positive weight for passable connections
                         passable_graph[node1].append((node2, weight))
+                        if (not self.directed) and (node2, node1) not in passable_graph[node2]:
+                            passable_graph[node2].append((node1, weight))
                         direct_connection = True
                         break  # No need to continue checking for this pair
 
@@ -314,6 +330,8 @@ class Graph:
                         if result:  # If a path exists
                             distance, _ = result
                             passable_graph[node1].append((node2, distance))
+                            if (not self.directed) and (node2, node1) not in passable_graph[node2]:
+                                passable_graph[node2].append((node1, distance))
 
         mst = []
         visited = set()
@@ -383,98 +401,263 @@ class Graph:
 
         return distances[target_node], path
 
-    def evacuate(self, buses_available, bus_capacity=30):
-        # Assuming that every collection point has 100 people to evacuate
-        total_people = 100 * len(self.collection_points)
-        max_transport_capacity = buses_available * bus_capacity
+    def add_super_source_sink(self):
+        """
+        Adds a super source and super sink to the graph, connecting to all collection points and shelters.
+        """
+        super_source = "super_source"
+        super_sink = "super_sink"
 
-        # Create a new graph for the flow problem
-        flow_graph = {}
-        for node in self.graph:
-            flow_graph[node] = {}
-            for connection, weight, capacity in self.graph[node]['connections']:
-                if weight >= 0:  # Only consider passable roads
-                    flow_graph[node][connection] = capacity
+        self.add_node(super_source)
+        self.add_node(super_sink)
 
-        # Add super-source and super-sink
-        super_source = "SuperSource"
-        super_sink = "SuperSink"
+        # Connect the super source to all collection points
+        for node in self.collection_points:
+            capacity = sum(conn[2] for conn in self.graph[node]['connections'])
+            self.add_edge(super_source, node, capacity)
 
-        flow_graph[super_source] = {}
-        flow_graph[super_sink] = {}
+        # Connect all shelters to the super sink
+        for node in self.shelter:
+            capacity = sum(conn[2] for conn in self.graph[node]['connections'])
+            self.add_edge(node, super_sink, capacity)
 
-        # Connect super-source to all collection points
-        for collection_point in self.collection_points:
-            flow_graph[super_source][collection_point] = float('inf')  # Unlimited capacity from super-source
+        return super_source, super_sink
 
-        # Connect all shelters to the super-sink
-        for shelter_point in self.shelter:
-            if shelter_point not in flow_graph:
-                flow_graph[shelter_point] = {}
-            flow_graph[shelter_point][super_sink] = float('inf')  # Unlimited capacity to super-sink
+    def bfs(self, source, sink, parent):
+        """
+        Breadth-First Search to find an augmenting path.
+        """
+        visited = {node: False for node in self.graph}
+        queue = [source]
+        visited[source] = True
 
-        # Helper function: BFS for finding augmenting paths in Edmonds-Karp
-        def bfs(residual_graph, source, sink, parent):
-            visited = set()
-            queue = [source]
-            visited.add(source)
+        while queue:
+            u = queue.pop(0)
 
-            while queue:
-                current_node = queue.pop(0)
+            for v, capacity, _ in self.graph[u]['connections']:
+                if not visited[v] and capacity > 0:  # Only consider nodes with available capacity
+                    queue.append(v)
+                    visited[v] = True
+                    parent[v] = u
+                    if v == sink:
+                        return True
 
-                for neighbor, capacity in residual_graph[current_node].items():
-                    if neighbor not in visited and capacity > 0:  # Unvisited and has capacity
-                        queue.append(neighbor)
-                        visited.add(neighbor)
-                        parent[neighbor] = current_node
+        return False
 
-                        if neighbor == sink:
-                            return True
-            return False
+    def edmonds_karp(self, source, sink):
+        """
+        Implements the Edmonds-Karp algorithm to calculate max flow and outputs the flow graph.
+        """
+        parent = {node: None for node in self.graph}
+        max_flow = 0
 
-        # Edmonds-Karp implementation for maximum flow
-        def edmonds_karp(graph, source, sink):
-            residual_graph = {node: edges.copy() for node, edges in graph.items()}
-            parent = {}
-            max_flow = 0
+        # Flow graph to track actual flows
+        flow_graph = {node: {} for node in self.graph}
 
-            while bfs(residual_graph, source, sink, parent):
-                # Find the bottleneck capacity along the path found by BFS
-                path_flow = float('inf')
-                current_node = sink
+        while self.bfs(source, sink, parent):
+            # Find the bottleneck capacity along the path
+            path_flow = float("Inf")
+            s = sink
+            while s != source:
+                u = parent[s]
+                for v, capacity, _ in self.graph[u]['connections']:
+                    if v == s:
+                        path_flow = min(path_flow, capacity)
+                        break
+                s = u
 
-                while current_node != source:
-                    path_flow = min(path_flow, residual_graph[parent[current_node]][current_node])
-                    current_node = parent[current_node]
+            # Update capacities and store flows in the flow graph
+            v = sink
+            while v != source:
+                u = parent[v]
+                # Update residual capacity in the forward edge
+                for i, (connection, capacity, _) in enumerate(self.graph[u]['connections']):
+                    if connection == v:
+                        self.graph[u]['connections'][i] = (connection, capacity - path_flow, _)
+                        break
+                # Update residual capacity in the reverse edge
+                for i, (connection, capacity, _) in enumerate(self.graph[v]['connections']):
+                    if connection == u:
+                        self.graph[v]['connections'][i] = (connection, capacity + path_flow, _)
+                        break
 
-                # Update residual capacities of the edges and reverse edges
-                current_node = sink
-                while current_node != source:
-                    prev = parent[current_node]
-                    residual_graph[prev][current_node] -= path_flow
-                    if current_node not in residual_graph:
-                        residual_graph[current_node] = {}
-                    if prev not in residual_graph[current_node]:
-                        residual_graph[current_node][prev] = 0
-                    residual_graph[current_node][prev] += path_flow
-                    current_node = prev
+                # Update the flow graph
+                flow_graph[u][v] = flow_graph[u].get(v, 0) + path_flow
+                flow_graph[v][u] = flow_graph[v].get(u, 0) - path_flow
 
-                max_flow += path_flow
+                v = u
 
-            return max_flow
+            # Add the path flow to the total max flow
+            max_flow += path_flow
 
-        # Calculate max flow
-        max_flow = edmonds_karp(flow_graph, super_source, super_sink)
-
-        # Output the evacuation details
-        print(f"Total people to evacuate: {total_people}")
-        print(f"Maximum transport capacity: {max_transport_capacity}")
-        print(f"Maximum flow (people evacuated): {max_flow}")
-
-        # Check if evacuation is possible
-        if max_flow >= total_people:
-            print("Evacuation successful. All people can be evacuated.")
-        else:
-            print("Evacuation not successful. Not enough capacity to evacuate everyone.")
+        # Output the flow graph
+        print("\nFlow Graph (Node -> Node: Flow):")
+        for u, connections in flow_graph.items():
+            for v, flow in connections.items():
+                if flow > 0:  # Only print positive flows
+                    print(f"{u} -> {v}: {flow}")
 
         return max_flow
+
+    def max_flow_collection_to_shelter(self):
+        """
+        Calculates the max flow from collection points to shelters using a super source and super sink.
+        """
+        # Add super source and super sink
+        super_source, super_sink = self.add_super_source_sink()
+
+        # Calculate the max flow
+        max_flow = self.edmonds_karp(super_source, super_sink)
+
+        # Remove the super source and super sink after calculation
+        self.remove_node(super_source)
+        self.remove_node(super_sink)
+
+        print(f"Maximum flow from collection points to shelters: {max_flow}")
+        return max_flow
+
+
+    def display_important_nodes(self):
+        print("Important Nodes:")
+        for node in self.graph:
+            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or node in self.assembly_points or node in self.shelter or node in self.collection_points:
+                print(f"{node}: {self.graph[node]['type_of_node']}")
+        print()
+
+    def add_personnel(self, personnel_type, amount, resources):
+        """
+        Adds personnel to the available pool, including their resources.
+        personnel_type: str ('policemen', 'firefighters', or 'medics')
+        amount: int (number of personnel to add)
+        resources: list of str (resources available with the personnel)
+        """
+        for _ in range(amount):
+            person = {'type': personnel_type, 'resources': resources}
+            self.staging_personnel.append(person)
+
+        if personnel_type == 'policemen':
+            self.total_policemen += amount
+        elif personnel_type == 'firefighters':
+            self.total_firefighters += amount
+        elif personnel_type == 'medics':
+            self.total_medics += amount
+        else:
+            print(f"Invalid personnel type: {personnel_type}")
+
+    def _get_group_size(self, personnel_type):
+        """
+        Returns the group size based on the personnel type.
+        Policemen work in groups of 2, firefighters in groups of 4, and medics in groups of 3.
+        """
+        if personnel_type == 'policemen':
+            return 2
+        elif personnel_type == 'firefighters':
+            return 4
+        elif personnel_type == 'medics':
+            return 3
+        else:
+            raise ValueError(f"Invalid personnel type: {personnel_type}")
+
+    def assign_personnel(self, site_name, personnel_type, numofgroups, required_resources):
+        """
+        Assign personnel to a site if resources match; otherwise, update the waiting list.
+        """
+        if site_name not in self.deployment_sites:
+            print(f"Site {site_name} is not a deployment site.")
+            return
+
+        if personnel_type not in self.staging_personnel:
+            print(f"No personnel of type {personnel_type} available in the staging area.")
+            return
+
+        # Filter personnel groups by required resources
+        available_groups = [
+            group for group in self.staging_personnel[personnel_type]
+            if all(resource in group['resources'] for resource in required_resources)
+        ]
+
+        if len(available_groups) < numofgroups:
+            print(f"Not enough qualified personnel groups. Updating waiting list for {site_name}.")
+            self.waiting_for_personnel[site_name][personnel_type] += numofgroups
+            return
+
+        # Deploy personnel to the site
+        for _ in range(numofgroups):
+            deployed_group = available_groups.pop(0)
+            self.staging_personnel[personnel_type].remove(deployed_group)
+
+        self.deployed_personnel[site_name][personnel_type] += numofgroups
+        print(f"Assigned {numofgroups} group(s) of {personnel_type} to {site_name}.")
+
+    def release_personnel(self, site_name, personnel_type, numofgroups):
+        """
+        Release personnel from a deployment site and check the waiting list for reassignment.
+        site_name: str (the deployment site name)
+        personnel_type: str ('policemen', 'firefighters', or 'medics')
+        numofgroups: int (number of groups to release)
+        """
+        group_size = self._get_group_size(personnel_type)
+        total_personnel_to_release = group_size * numofgroups
+
+        # Check if there are enough personnel to release
+        if self.deployed_personnel[site_name][personnel_type] >= total_personnel_to_release:
+            self.deployed_personnel[site_name][personnel_type] -= total_personnel_to_release
+            for _ in range(total_personnel_to_release):
+                # Add released personnel back to the staging area
+                self.staging_personnel.append(
+                    {'type': personnel_type, 'resources': []})  # User defines resources when adding
+
+            print(f"Released {total_personnel_to_release} {personnel_type}(s) from {site_name}.")
+
+            # Re-check the waiting list for deployment
+            self.check_waiting_sites()
+        else:
+            print(
+                f"Error: Not enough {personnel_type}(s) deployed at {site_name} to release {total_personnel_to_release}.")
+
+    def check_waiting_sites(self):
+        """
+        Check if any waiting deployment sites can now be fulfilled.
+        """
+        for site_name, waiting in self.waiting_for_personnel.items():
+            for personnel_type, required in waiting.items():
+                if required > 0:
+                    group_size = self._get_group_size(personnel_type)
+                    num_of_groups = (required + group_size - 1) // group_size  # Calculate required groups
+                    required_resources = []  # Resources are entered when personnel are added by the user
+
+                    self.assign_personnel(site_name, personnel_type, num_of_groups, required_resources)
+
+                    # Reduce the waiting list if personnel were assigned
+                    assigned_personnel = min(required, num_of_groups * group_size)
+                    waiting[personnel_type] -= assigned_personnel
+
+
+    def display_waiting_status(self):
+        """
+        Display the current waiting status for each deployment site.
+        """
+        print("Waiting for personnel:")
+        for site, waiting in self.waiting_for_personnel.items():
+            for personnel_type, count in waiting.items():
+                if count > 0:
+                    print(f"{site} is waiting for {count} {personnel_type}(s) in groups.")
+
+    def display_staging_area(self):
+        """Display the available emergency services in the staging area."""
+        if not self.staging_personnel:
+            print("No emergency services available in the staging area.")
+            return
+
+        print("Staging Area Personnel:")
+        for person in self.staging_personnel:
+            print(
+                f"Type: {person['type']}, Resources: {', '.join(person['resources'])}")
+
+    def display_total_personnel(self):
+        """Display the total number of available personnel."""
+        print(f"Total Policemen: {self.total_policemen}")
+        print(f"Total Firefighters: {self.total_firefighters}")
+        print(f"Total Medics: {self.total_medics}")
+
+

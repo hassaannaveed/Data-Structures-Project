@@ -27,9 +27,6 @@ print("Graph is directed: ", graph.directed)
 print("Graph is weighted: ", graph.weighted)
 ans = 'y'
 
-total_buses = 0
-
-
 while ans=='y':
     print("***** Menu *****")
     print("1. Display the graph and Output to file")
@@ -44,9 +41,12 @@ while ans=='y':
     print("10. Enter a collection point for evacuation")
     print("11. Enter the capacity of a road")
     print("12. Enter the capacity of all nodes through a file")
-    print ("13. Enter the Total number of buses available")
-    print("14. Evaluate the evacuation plan")
-    print("15. Exit")
+    print("13. Evaluate the evacuation plan")
+    print("14. Enter the total number of emergency services personnel")
+    print("15. Request personnel for a specific location")
+    print("16. Release personnel from a specific location")
+    print("17. Check waiting sites")
+    print("18. Exit")
     print("******************")
 
     choice = input("Enter your choice: ")
@@ -196,21 +196,96 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '13':
-        total_buses = int(input("Enter the total number of buses available (each bus carry 30 people): "))
+        if graph.weighted and graph.directed:
+            graph.max_flow_collection_to_shelter()
+        else:
+            print("Graph is either unweighted or undirected. Cannot carry the operation.")
+
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '14':
-        graph.evacuate(total_buses)
-
+        personnel = input("Enter policemen, firefighters or medics: ")
+        while personnel not in ['policemen', 'firefighters', 'medics']:
+            print("Invalid choice. Please try again.")
+            personnel = input("Enter policemen, firefighters or medics: ")
+        num_personnel = int(input("Enter the number of personnel: "))
+        resources = input("Enter the resources available for the personnel: ")
+        graph.add_personnel(personnel, num_personnel, resources)
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
             ans = input("Do you want to continue? (y/n): ")
 
-    elif choice == '15':
+
+    elif choice == '15':  # Request personnel for a specific location
+
+        site_name = input("Enter the location to request personnel: ")
+        personnel_type = input("Enter the type of personnel (policemen, firefighters, medics): ")
+        while personnel_type not in ['policemen', 'firefighters', 'medics']:
+            print("Invalid type. Please try again.")
+
+            personnel_type = input("Enter the type of personnel (policemen, firefighters, medics): ")
+        num_of_groups = int(input("Enter the number of groups needed: "))
+
+        required_resources = input("Enter the required resources for the personnel (comma-separated): ").split(',')
+
+        graph.assign_personnel(site_name, personnel_type, num_of_groups, required_resources)
+
+        print(f"Requested {num_of_groups} group(s) of {personnel_type} for {site_name}.")
+
+        ans = input("Do you want to continue? (y/n): ")
+
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+
+            ans = input("Do you want to continue? (y/n): ")
+
+
+    elif choice == '16':  # Release personnel from a specific location
+
+        site_name = input("Enter the location to release personnel from: ")
+
+        personnel_type = input("Enter the type of personnel to release (policemen, firefighters, medics): ")
+
+        while personnel_type not in ['policemen', 'firefighters', 'medics']:
+            print("Invalid type. Please try again.")
+
+            personnel_type = input("Enter the type of personnel to release (policemen, firefighters, medics): ")
+
+        num_of_groups = int(input("Enter the number of groups to release: "))
+
+        graph.release_personnel(site_name, personnel_type, num_of_groups)
+
+        print(f"Released {num_of_groups} group(s) of {personnel_type} from {site_name}.")
+
+        ans = input("Do you want to continue? (y/n): ")
+
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+
+            ans = input("Do you want to continue? (y/n): ")
+
+
+    elif choice == '17':
+
+        print("Checking waiting sites for personnel...")
+
+        graph.check_waiting_sites()
+
+        print("Waiting sites have been processed.")
+
+        ans = input("Do you want to continue? (y/n): ")
+
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+
+            ans = input("Do you want to continue? (y/n): ")
+
+
+    elif choice == '18':
         print("Exiting...")
         break
 
