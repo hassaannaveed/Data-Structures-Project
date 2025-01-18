@@ -282,7 +282,7 @@ class Graph:
         else:
             print("\nNo intersection found.")
 
-    def dijkstra(self, start_node, target_node):
+    def djikstra(self, start_node, target_node):
         # Min-heap priority queue
         pq = [(0, start_node)]  # (distance, node)
         distances = {node: float('inf') for node in self.graph}
