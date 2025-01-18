@@ -321,7 +321,6 @@ class Graph:
             current_node = prev_nodes[current_node]
 
         if distances[target_node] == float('inf'):
-            print(f"No path exists between {start_node} and {target_node}.")
             return None
 
         return distances[target_node], path
@@ -329,7 +328,7 @@ class Graph:
     def display_important_nodes(self):
         print("Important Nodes:")
         for node in self.graph:
-            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or  node in self.shelter or node in self.collection_points:
+            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g']:
                 print(f"{node}: {self.graph[node]['type_of_node']}")
         print()
 
