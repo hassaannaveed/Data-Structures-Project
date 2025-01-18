@@ -6,9 +6,10 @@ from f3 import F3
 from f4 import F4
 from f5 import F5
 
-
+#Let the user input the filename
 filename = input("Enter the filename to be read: ")
 
+#Get the adjacency matrix from the file
 adj_matrix = get_matrix(filename)
 
 # Check if the adjacency matrix is None (i.e., file not found or error reading file)
@@ -16,6 +17,7 @@ if adj_matrix is None:
     print("Exiting...")
     exit()
 
+#Create appropriate graph object based on the adjacency matrix
 if is_directed(adj_matrix) and is_weighted(adj_matrix):
     graph = Graph(directed=True, weighted=True)
 elif is_directed(adj_matrix) and not is_weighted(adj_matrix):
@@ -25,17 +27,17 @@ elif not is_directed(adj_matrix) and is_weighted(adj_matrix):
 else:
     graph = Graph(directed=False, weighted=False)
 
-
+#Add the adjacency matrix to the graph
 graph.add_from_adj_matrix(adj_matrix)
 
 print("Graph has been created successfully.")
 print("Graph is directed: ", graph.directed)
 print("Graph is weighted: ", graph.weighted)
-f1 = F1(graph)
-f2 = F2(graph)
-f3 = F3(graph)
-f4 = F4(graph)
-f5 = F5(graph)
+f1 = F1(graph) #Create an object of F1 class
+f2 = F2(graph) #Create an object of F2 class
+f3 = F3(graph) #Create an object of F3 class
+f4 = F4(graph) #Create an object of F4 class
+f5 = F5(graph) #Create an object of F5 class
 ans = 'y'
 
 while ans=='y':
@@ -63,8 +65,8 @@ while ans=='y':
 
     if choice == '1':
         print("Note: Negative weights represent flooded roads.")
-        graph.display()
-        graph.output_to_file()
+        graph.display() #Display the graph
+        graph.output_to_file() #Output the graph to a file
         print("Graph has been written to a file successfully.")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -84,7 +86,7 @@ while ans=='y':
                 ans = input("Do you want to continue? (y/n): ")
             continue
 
-        graph.add_edge(node1, node2, weight)
+        graph.add_edge(node1, node2, weight) #Add the edge
 
 
         print(f"Edge between {node1} and {node2} has been added.")
@@ -96,7 +98,7 @@ while ans=='y':
     elif choice == '3':
         node1 = input("Enter the starting node: ")
         node2 = input("Enter the ending node: ")
-        graph.remove_edge(node1, node2)
+        graph.remove_edge(node1, node2) #Remove the edge
         print(f"Edge between {node1} and {node2} has been removed.")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -105,7 +107,7 @@ while ans=='y':
 
     elif choice == '4':
         node = input("Enter the node to be added: ")
-        graph.add_node(node)
+        graph.add_node(node) #Add the node
         print(f"{node} has been added")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -114,7 +116,7 @@ while ans=='y':
 
     elif choice == '5':
         node = input("Enter the node to be removed: ")
-        graph.remove_node(node)
+        graph.remove_node(node) #Remove the node
         print(f"{node} has been removed.")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -127,7 +129,7 @@ while ans=='y':
         while site_type not in ['s', 'r', 'h', 'g', 'sh']:
             print("Invalid choice. Please try again.")
             site_type = input("Enter s for supply point, r for rescue station, h for hospital, g for Govt. building: ")
-        graph.set_important(node, site_type)
+        graph.set_important(node, site_type) #Mark the node as important based on the site type
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
@@ -136,7 +138,7 @@ while ans=='y':
     elif choice == '7':
         node1 = input("Enter the starting node: ")
         node2 = input("Enter the ending node: ")
-        graph.set_impassable(node1, node2)
+        graph.set_impassable(node1, node2) #Mark the edge as impassable of flooded
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
@@ -151,10 +153,10 @@ while ans=='y':
                 ans = input("Do you want to continue? (y/n): ")
             continue
         node = input("Enter the supply point to find the nearest intersection: ")
-        graph.set_important(node, 's')
-        result = graph.distance_to_nearest_intersection(node)
+        graph.set_important(node, 's') #Mark the node as important
+        result = graph.distance_to_nearest_intersection(node) #Find the nearest intersection
         if result:
-            nearest_node, distance = result
+            nearest_node, distance = result #Get the nearest node and distance
             print(f"The nearest intersection to {node} is {nearest_node} at a distance of {distance}.")
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -162,6 +164,8 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '9':
+        # Get the basic network of important nodes
+        #Only works for weighted graphs
         if not graph.weighted:
             print("Graph is Unweighted. Cannot carry the operation.")
             ans = input("Do you want to continue? (y/n): ")
@@ -179,6 +183,7 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '10':
+        # Set a collection point for evacuation
         node = input("Enter the collection point for evacuation: ")
         graph.set_important(node, 'c')
         print(f"{node} has been set as the evacuation point.")
@@ -188,6 +193,7 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '11':
+        # Set the capacity of a road
         node1 = input("Enter the starting node: ")
         node2 = input("Enter the ending node: ")
         capacity = int(input("Enter the capacity of the road (in number of people): "))
@@ -198,6 +204,7 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '12':
+        # Set the capacity of all nodes from a file like an adjacency matrix
         filename = input("Enter the filename to read the capacity of all nodes: ")
         graph.set_capacity_from_file(filename)
         ans = input("Do you want to continue? (y/n): ")
@@ -209,8 +216,8 @@ while ans=='y':
         #Only works for weighted and directed graphs
         if graph.weighted and graph.directed:
             #The output will only show the number of people that can be evacuated
-            #the system assumes that the number os buses are enough for evacuation
-            f2.max_flow_collection_to_shelter()
+            #the system assumes that the number of buses are enough for evacuation
+            f2.max_flow_collection_to_shelter() #Calculate the max flow from collection points to shelters
         else:
             print("Graph is either unweighted or undirected. Cannot carry the operation.")
 
@@ -220,6 +227,14 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '14':
+        # Calculate the fastest route between two nodes (Djikstra's algorithm)
+        if not graph.weighted:
+            print("Graph is Unweighted. Cannot carry the operation.")
+            ans = input("Do you want to continue? (y/n): ")
+            while ans not in ['y', 'n']:
+                print("Invalid choice. Please try again.")
+                ans = input("Do you want to continue? (y/n): ")
+            continue
         source = input("Enter the source node: ")
         destination = input("Enter the destination node: ")
         result = f3.djikstra(source, destination)
@@ -233,6 +248,7 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '15':
+        # Determine optimal locations for additional supply points
         current_supply_points = input("Enter current supply points (comma-separated): ").split(',')
         k = int(input("Enter the number of additional supply points: "))
         additional_supply_points = f4.optimal_supply_points(current_supply_points, k)
@@ -241,7 +257,7 @@ while ans=='y':
         ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '16':
-        # Step 1: Get deployment sites from the user
+        # Get deployment sites from the user
         num_sites = int(input("Enter the number of deployment sites: "))
 
         for _ in range(num_sites):
@@ -257,7 +273,7 @@ while ans=='y':
             # Add deployment site
             f5.add_deployment_site(site_name, required_skills, required_resources, required_people)
 
-        # Step 2: Get squads from the user
+        # Get squads from the user
         num_squads = int(input("Enter the number of squads: "))
 
         for _ in range(num_squads):
@@ -273,15 +289,17 @@ while ans=='y':
             # Add squad to staging area
             f5.add_squad_to_staging_area(squad_name, squad_skills, squad_resources, squad_members)
 
-        # Step 3: Assign squads to deployment sites based on user input
+        # Assign squads to deployment sites based on user input
         print("\nAssign squads to deployment sites.")
         for site_name in graph.deployment_sites:  # Only iterate over deployment sites
             squad_name = input(f"Enter the squad name to assign to {site_name}: ")
             f5.assign_squad_to_deployment(site_name, squad_name)
 
-        # Step 4: Deploy emergency services (matching squads to sites)
+        # Deploy emergency services (matching squads to sites)
         print("\nDeploying emergency services...")
-        deployment_sites = {}
+
+        # Get deployment sites with required skills and resources from f5
+        deployment_sites = f5.get_deployment_sites()
 
         for site_name in graph.deployment_sites:  # Use only deployment sites
             required_skills = graph.graph[site_name].get('required_skills', set())
@@ -290,13 +308,16 @@ while ans=='y':
 
         matching = f5.deploy_emergency_services(deployment_sites)
 
-        # Step 5: Display the deployment plan
+        # Display the deployment plan
         print("\nDeployment Plan:")
         for site, squad in matching.items():
             print(f"Deployment Site {site} <- Squad {squad}")
 
         print(f"\nTotal squads deployed: {len(matching)}")
-
+        ans = input("Do you want to continue? (y/n): ")
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+            ans = input("Do you want to continue? (y/n): ")
 
 
     elif choice == '17':

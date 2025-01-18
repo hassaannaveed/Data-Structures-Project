@@ -17,11 +17,12 @@ class F1(Graph):
 
         self.staging_area =  graph.staging_area
 
+    #calculates and output the Prim of all important nodes
     def basic_network(self):
         # Create a new graph with only important nodes
         important_nodes = [
             node for node in self.graph
-            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g']
+            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] # Important nodes
         ]
         # Check if there are any important nodes
         if not important_nodes:
@@ -56,6 +57,8 @@ class F1(Graph):
                             if (not self.directed) and (node2, node1) not in passable_graph[node2]:
                                 passable_graph[node2].append((node1, distance))
 
+
+        #Prim algorithm
         mst = []
         visited = set()
         start_node = important_nodes[0]

@@ -4,6 +4,9 @@ from graph import Graph
 from itertools import combinations
 import random
 
+from main import deployment_sites
+
+
 class F5(Graph):
     def __init__(self, graph):
         self.directed = graph.directed
@@ -17,6 +20,7 @@ class F5(Graph):
 
         self.staging_area =  graph.staging_area
 
+    #Add a squad to the staging area
     def add_squad_to_staging_area(self, squad_name, skills, resources, members):
         """
         Adds a squad with specific skills/resources to the staging area.
@@ -27,7 +31,7 @@ class F5(Graph):
             'members': members
         }
 
-
+    #Remove a squad from the staging area
     def remove_squad_from_staging_area(self, squad_name):
         """
         Removes a squad from the staging area.
@@ -35,10 +39,9 @@ class F5(Graph):
         if squad_name in self.staging_area:
             del self.staging_area[squad_name]
 
+    #Deploy emergency services to deployment sites
     def deploy_emergency_services(self, deployment_sites):
         """
-        Deploys emergency services personnel from the staging area to deployment sites.
-
         Args:
             deployment_sites (dict): A dictionary where keys are deployment site names,
                                      and values are sets of required skills/resources.
@@ -90,15 +93,14 @@ class F5(Graph):
 
         return matching
 
+    #Add a deployment site with specific requirements
     def add_deployment_site(self, site_name, required_skills, required_resources, required_people):
         """
-        Adds a deployment site with specific requirements.
-
         Args:
-            site_name (str): Name of the deployment site.
-            required_skills (set): Set of skills required for the deployment site.
-            required_resources (set): Set of resources required for the deployment site.
-            required_people (int): Number of people needed for the deployment.
+            site_name: Name of the deployment site.
+            required_skills: Set of skills required for the deployment site.
+            required_resources: Set of resources required for the deployment site.
+            required_people: Number of people needed for the deployment.
         """
         # Add deployment site as a node in the graph
         self.add_node(site_name)
@@ -109,10 +111,9 @@ class F5(Graph):
         self.graph[site_name]['required_people'] = required_people
         self.graph[site_name]['assigned_squad'] = None  # This will store the squad assigned to this site
 
+    #Assign a squad to a deployment site
     def assign_squad_to_deployment(self, site_name, squad_name):
         """
-        Assigns a squad from the staging area to the deployment site.
-
         Args:
             site_name (str): The deployment site to which the squad is assigned.
             squad_name (str): The squad name to assign to the site.
@@ -152,3 +153,10 @@ class F5(Graph):
                 print(f"Missing resources: {required_resources - squad_resources}")
             if squad_members < required_people:
                 print(f"Not enough people: Required {required_people}, but squad has {squad_members} members.")
+
+    #Get the deployment sites
+    def get_deployment_sites(self):
+        """
+        Returns the list of deployment sites along with their assigned squads.
+        """
+        return self.deployment_sites

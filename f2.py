@@ -17,10 +17,8 @@ class F2(Graph):
 
         self.staging_area =  graph.staging_area
 
+    # Calculates the maximum flow from collection points to shelters using a super source and super sink.
     def max_flow_collection_to_shelter(self):
-        """
-        Calculates the max flow from collection points to shelters using a super source and super sink.
-        """
         # Add super source and super sink
         super_source, super_sink = self.add_super_source_sink()
 

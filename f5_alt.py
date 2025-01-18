@@ -31,6 +31,7 @@ class F5Deployment:
         }
         self.priority = []
 
+    # Get user input for the number of teams, their capacities, skills, and the required units, skills, and priority for each site
     def get_user_input(self):
         print("Available skills:", ", ".join(sorted(set(skill for skills in self.disaster_types.values() for skill in skills))))
 
@@ -52,6 +53,7 @@ class F5Deployment:
 
         self.priority = sorted(self.sites.keys(), key=lambda site: self.sites[site]['priority'])
 
+    # Create a flow network based on the user input
     def create_flow_graph(self):
         # Use the F5 graph structure to create a flow network
         self.f5_graph.graph.add_node("source")
@@ -67,6 +69,7 @@ class F5Deployment:
                 if team_data['skills'] & site_data['required_skills']:
                     self.f5_graph.graph.add_edge(team, site, capacity=min(team_data['capacity'], site_data['required_units']))
 
+    # Implement the Ford-Fulkerson algorithm to find the maximum flow in the flow network
     def ford_fulkerson(self, source, sink):
         residual_graph = {edge: self.f5_graph.graph.edges[edge]['capacity'] for edge in self.f5_graph.graph.edges}
         max_flow = 0
@@ -100,6 +103,7 @@ class F5Deployment:
 
         return max_flow
 
+    # Assign teams to sites based on the maximum flow in the flow network
     def assign_teams_to_sites(self):
         self.create_flow_graph()
         max_flow = self.ford_fulkerson("source", "sink")
@@ -131,6 +135,7 @@ class F5Deployment:
             if required_units > 0:
                 print(f"Error: Not enough personnel to fully handle {site}. {required_units} units still needed. Help is on its way.")
 
+    # Display the deployment summary
     def display(self):
         print("\n--- Deployment Summary ---")
         print("Teams and their remaining capacities:")

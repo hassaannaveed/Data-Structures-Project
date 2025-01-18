@@ -4,6 +4,7 @@ from graph import Graph
 from itertools import combinations
 import random
 
+#Just a Generic class which inherits from Graph because F3 uses Djikstra's algorithm which is already in graph class
 class F3(Graph):
     def __init__(self, graph):
         self.directed = graph.directed

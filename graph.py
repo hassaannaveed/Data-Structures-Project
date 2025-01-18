@@ -6,38 +6,29 @@ import random
 class Graph:
 
     def __init__(self, directed=False, weighted=False):
-        self.directed = directed
-        self.weighted = weighted
-        self.graph = {}
+        self.directed = directed # Whether the graph is directed or not
+        self.weighted = weighted # Whether the graph is weighted or not
+        self.graph = {} # The graph dictionary
 
 
         # Initialize the lists for important nodes
-        self.deployment_sites = []
-        self.shelter = []
-        self.collection_points = []
+        self.deployment_sites = [] # Holds deployment sites
+        self.shelter = [] # Holds shelters
+        self.collection_points = [] # Holds collection points
 
         self.staging_area = {}  # Holds squads and their skills/resources
 
 
 
-
+    # Add a node to the graph
     def add_node(self, node):
         if node not in self.graph:
-            self.graph[node] = {'connections': [], 'type_of_node': None}
+            self.graph[node] = {'connections': [], 'type_of_node': None} # Initialize connections and type of node (which can be 's', 'r', 'h', 'g')
         else:
             print("Node already exists.")
 
+    # Add an edge between two nodes in the graph with an optional weight and capacity
     def add_edge(self, node1, node2, weight=1, capacity=99):
-        """
-            Adds an edge between two nodes with an optional weight and capacity.
-            If the graph is undirected, the edge is bidirectional.
-
-            Args:
-                node1 (str): The starting node.
-                node2 (str): The ending node.
-                weight (int): The weight of the edge (default is 1).
-                capacity (int): The capacity of the edge (default is 99).
-            """
         if node1 not in self.graph:
             self.add_node(node1)
         if node2 not in self.graph:
@@ -49,6 +40,7 @@ class Graph:
         if not self.directed:
             self.graph[node2]['connections'].append((node1, weight, capacity))
 
+    # Set the capacity of an edge between two nodes
     def set_capacity(self, node1, node2, capacity):
         if node1 not in self.graph or node2 not in self.graph:
             print("One or both nodes do not exist.")
@@ -76,15 +68,18 @@ class Graph:
         else:
             print(f"No edge found between {node1} and {node2} to update capacity.")
 
+    # Get the connections (neighbours) of a node
     def get_connections(self, node):
         return self.graph.get(node, {}).get('connections', [])
 
+    # Check if an edge exists between two nodes
     def has_edge(self, node1, node2):
         for connection, _, _ in self.graph.get(node1, {}).get('connections', []):
             if connection == node2:
                 return True
         return False
 
+    # Remove an edge between two nodes
     def remove_edge(self, node1, node2):
         if node1 in self.graph:
             self.graph[node1]['connections'] = [n for n in self.graph[node1]['connections'] if n[0] != node2]
@@ -92,6 +87,7 @@ class Graph:
         if not self.directed and node2 in self.graph:
             self.graph[node2]['connections'] = [n for n in self.graph[node2]['connections'] if n[0] != node1]
 
+    # Remove a node from the graph
     def remove_node(self, node):
         if node in self.graph:
             # Remove edges from other nodes to this node
@@ -99,6 +95,7 @@ class Graph:
                 connections['connections'] = [n for n in connections['connections'] if n[0] != node]
             del self.graph[node]
 
+    # Display the graph
     def display(self):
         print("Graph:")
         displayed_edges = set()  # To track edges in undirected graphs and prevent duplication
@@ -138,7 +135,7 @@ class Graph:
             else:
                 print(f"{node}: {connections_data}")
 
-
+    # Add nodes and edges to graph from an adjacency matrix
     def add_from_adj_matrix(self, adj_matrix):
         num_rows = len(adj_matrix)
         for row in adj_matrix:
@@ -156,6 +153,7 @@ class Graph:
                 if adj_matrix[i][j] != 0:
                     self.add_edge(nodes[i], nodes[j], adj_matrix[i][j])
 
+    # Mark a node as important (supply point, rescue station, hospital, or government building)
     def set_important(self, node, type_of_site):
         if node not in self.graph:
             print("The node does not exist.")
@@ -171,7 +169,7 @@ class Graph:
                 self.shelter.append(node)
 
 
-
+    # Output the graph to a file
     def output_to_file(self, filename="output.txt"):
         nodes = list(self.graph.keys())
         num_nodes = len(nodes)
@@ -192,6 +190,7 @@ class Graph:
                 row_string = " ".join([str(item) for item in row])
                 file.write(row_string + "\n")
 
+    # Mark an edge as impassable (by setting weight to -weight) so that it can be used as flooded edges if we still want to know their weight
     def set_impassable(self, node1, node2):
         if node1 not in self.graph:
             print(f"Node {node1} does not exist.")
@@ -226,12 +225,14 @@ class Graph:
                     connections.append((connected_node, weight, capacity))
             self.graph[node2]['connections'] = connections
 
+    # Get the capacity of an edge between two nodes
     def get_capacity(self, node1, node2):
         for connection, weight, capacity in self.graph.get(node1, {}).get('connections', []):
             if connection == node2:
                 return capacity
         return None
 
+    # Set the capacity of edges from a file
     def set_capacity_from_file(self, filename):
         capacity_matrix = get_matrix(filename)
         num_rows = len(capacity_matrix)
@@ -247,7 +248,7 @@ class Graph:
                 if capacity_matrix[i][j] > 0:
                     self.set_capacity(nodes[i], nodes[j], capacity_matrix[i][j])
 
-
+    # Calculate and output the distance to the nearest intersection from a supply point
     def distance_to_nearest_intersection(self, supply_point):
         if supply_point not in self.graph:
             print(f"Node {supply_point} does not exist.")
@@ -262,7 +263,7 @@ class Graph:
         # Iterate through all nodes
         for node in self.graph:
             # Check if the node is an intersection
-            if node != supply_point and len(self.graph[node]['connections']) > 1:
+            if node != supply_point and len(self.graph[node]['connections']) > 1: # Intersections have more than one connection
                 # Use the pre-defined djikstra function
                 distance, path = self.djikstra(supply_point, node)
 
@@ -282,6 +283,7 @@ class Graph:
         else:
             print("\nNo intersection found.")
 
+    #Generic Djikstra function to find the shortest path between two nodes
     def djikstra(self, start_node, target_node):
         if start_node not in self.graph or target_node not in self.graph:
             print(f"One or both nodes ({start_node}, {target_node}) do not exist.")
@@ -325,6 +327,7 @@ class Graph:
 
         return distances[target_node], path
 
+    # Display the important nodes in the graph
     def display_important_nodes(self):
         print("Important Nodes:")
         for node in self.graph:
@@ -332,6 +335,8 @@ class Graph:
                 print(f"{node}: {self.graph[node]['type_of_node']}")
         print()
 
+
+    #Add super source and super sink to the graph
     def add_super_source_sink(self):
         """
         Adds a super source and super sink to the graph, connecting to all collection points and shelters.
@@ -354,6 +359,7 @@ class Graph:
 
         return super_source, super_sink
 
+    #Breadth-First Search to find an augmenting path
     def bfs(self, source, sink, parent):
         """
         Breadth-First Search to find an augmenting path.
@@ -375,6 +381,7 @@ class Graph:
 
         return False
 
+    #Edmonds-Karp algorithm to calculate max flow
     def edmonds_karp(self, source, sink):
         """
         Implements the Edmonds-Karp algorithm to calculate max flow and outputs the flow graph.
