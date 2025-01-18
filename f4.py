@@ -56,7 +56,8 @@ class F4(Graph):
                     if candidate in best_medoids:
                         continue
                     new_medoids = best_medoids[:]
-                    new_medoids.remove(medoid)
+                    if medoid in new_medoids:
+                        new_medoids.remove(medoid)
                     new_medoids.append(candidate)
                     new_cost = calculate_cost(new_medoids)
                     if new_cost < best_cost:
