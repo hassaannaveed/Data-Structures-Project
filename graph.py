@@ -283,6 +283,10 @@ class Graph:
             print("\nNo intersection found.")
 
     def djikstra(self, start_node, target_node):
+        if start_node not in self.graph or target_node not in self.graph:
+            print(f"One or both nodes ({start_node}, {target_node}) do not exist.")
+            return None
+
         # Min-heap priority queue
         pq = [(0, start_node)]  # (distance, node)
         distances = {node: float('inf') for node in self.graph}
@@ -297,25 +301,28 @@ class Graph:
                 continue
 
             # Explore neighbors
-            for neighbor, weight in self.graph[current_node]:
-                new_dist = current_dist + weight
-                if new_dist < distances[neighbor]:
-                    distances[neighbor] = new_dist
-                    prev_nodes[neighbor] = current_node
-                    heapq.heappush(pq, (new_dist, neighbor))
+            for neighbor, weight, _ in self.graph[current_node]['connections']:
+                if weight < 0:  # Skip impassable roads
+                    continue
 
-            if distances[target_node] == float('inf'):
-                return None
+                new_distance = current_dist + weight
+
+                if new_distance < distances[neighbor]:
+                    distances[neighbor] = new_distance
+                    prev_nodes[neighbor] = current_node
+                    heapq.heappush(pq, (new_distance, neighbor))
 
         # Reconstruct the path from start to target node
         path = []
         current_node = target_node
-        while prev_nodes[current_node] is not None:
+
+        while current_node is not None:
             path.insert(0, current_node)
             current_node = prev_nodes[current_node]
 
-        if path:
-            path.insert(0, start_node)
+        if distances[target_node] == float('inf'):
+            print(f"No path exists between {start_node} and {target_node}.")
+            return None
 
         return distances[target_node], path
 

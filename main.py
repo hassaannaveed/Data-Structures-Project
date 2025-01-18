@@ -222,7 +222,7 @@ while ans=='y':
     elif choice == '14':
         source = input("Enter the source node: ")
         destination = input("Enter the destination node: ")
-        result = f3.calculate_fastest_route(source, destination)
+        result = graph.djikstra(source, destination)
         if result:
             distance, path = result
             print(f"The fastest route from {source} to {destination} is: {' -> '.join(path)}")
