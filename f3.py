@@ -12,7 +12,6 @@ class F3(Graph):
 
         # Initialize the lists for important nodes
         self.deployment_sites = graph.deployment_sites
-        self.assembly_points = graph.assembly_points
         self.shelter = graph.shelter
         self.collection_points = graph.collection_points
 
