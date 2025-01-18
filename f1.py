@@ -21,7 +21,7 @@ class F1(Graph):
         # Create a new graph with only important nodes
         important_nodes = [
             node for node in self.graph
-            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or node in self.assembly_points or node in self.shelter or node in self.collection_points # Add all important nodes
+            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites  or node in self.shelter or node in self.collection_points # Add all important nodes
         ]
         # Check if there are any important nodes
         if not important_nodes:

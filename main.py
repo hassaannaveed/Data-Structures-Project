@@ -52,10 +52,10 @@ while ans=='y':
     print("10. Enter a collection point for evacuation")
     print("11. Enter the capacity of a road")
     print("12. Enter the capacity of all nodes through a file")
-    print("13. Calculate the fastest route between two nodes")
-    print("14. Determine optimal locations for additional supply points")
-    print("15. Evaluate the evacuation plan")
-    print("16. F5")
+    print("13. Evaluate the evacuation plan")
+    print("14. Calculate the fastest route between two nodes")
+    print("15. Determine optimal locations for additional supply points")
+    print("16. Deployment planning for emergency services")
     print("17. Exit")
     print("******************")
 
@@ -123,10 +123,10 @@ while ans=='y':
 
     elif choice == '6':
         node = input("Enter the node to be marked as important: ")
-        site_type = input("Enter d for deployment site, a for assembly point, s for supply point, r for rescue station, h for hospital, g for Govt. building, sh for shelter: ")
-        while site_type not in ['d', 'a', 's', 'r', 'h', 'g', 'sh']:
+        site_type = input("Enter s for supply point, r for rescue station, h for hospital, g for Govt. building, sh for shelter: ")
+        while site_type not in ['s', 'r', 'h', 'g', 'sh']:
             print("Invalid choice. Please try again.")
-            site_type = input("Enter d for deployment site, a for assembly point, s for supply point, r for rescue station, h for hospital, g for Govt. building: ")
+            site_type = input("Enter s for supply point, r for rescue station, h for hospital, g for Govt. building: ")
         graph.set_important(node, site_type)
         ans = input("Do you want to continue? (y/n): ")
         while ans not in ['y', 'n']:
@@ -206,25 +206,6 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '13':
-        source = input("Enter the source node: ")
-        destination = input("Enter the destination node: ")
-        result = F3.calculate_fastest_route(source, destination)
-        if result:
-            distance, path = result
-            print(f"The fastest route from {source} to {destination} is: {' -> '.join(path)}")
-            print(f"Total distance: {distance}")
-        ans = input("Do you want to continue? (y/n): ")
-        while ans not in ['y', 'n']:
-            print("Invalid choice. Please try again.")
-            ans = input("Do you want to continue? (y/n): ")
-    elif choice == '14':
-        current_supply_points = input("Enter current supply points (comma-separated): ").split(',')
-        k = int(input("Enter the number of additional supply points: "))
-        additional_supply_points = F4.optimal_supply_points(current_supply_points, k)
-        if additional_supply_points:
-            print("Recommended additional supply points:", ", ".join(additional_supply_points))
-        ans = input("Do you want to continue? (y/n): ")
-    elif choice == '15':
         #Only works for weighted and directed graphs
         if graph.weighted and graph.directed:
             #The output will only show the number of people that can be evacuated
@@ -237,6 +218,27 @@ while ans=='y':
         while ans not in ['y', 'n']:
             print("Invalid choice. Please try again.")
             ans = input("Do you want to continue? (y/n): ")
+
+    elif choice == '14':
+        source = input("Enter the source node: ")
+        destination = input("Enter the destination node: ")
+        result = f3.calculate_fastest_route(source, destination)
+        if result:
+            distance, path = result
+            print(f"The fastest route from {source} to {destination} is: {' -> '.join(path)}")
+            print(f"Total distance: {distance}")
+        ans = input("Do you want to continue? (y/n): ")
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+            ans = input("Do you want to continue? (y/n): ")
+
+    elif choice == '15':
+        current_supply_points = input("Enter current supply points (comma-separated): ").split(',')
+        k = int(input("Enter the number of additional supply points: "))
+        additional_supply_points = f4.optimal_supply_points(current_supply_points, k)
+        if additional_supply_points:
+            print("Recommended additional supply points:", ", ".join(additional_supply_points))
+        ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '16':
         # Step 1: Get deployment sites from the user

@@ -282,33 +282,27 @@ class Graph:
         else:
             print("\nNo intersection found.")
 
-
-    def djikstra(self, start_node, target_node):
+    def dijkstra(self, start_node, target_node):
         # Min-heap priority queue
         pq = [(0, start_node)]  # (distance, node)
-        distances = {node: 999999999 for node in self.graph}
+        distances = {node: float('inf') for node in self.graph}
         distances[start_node] = 0
         prev_nodes = {node: None for node in self.graph}
 
         while pq:
             current_dist, current_node = heapq.heappop(pq)
+
             # Skip processing if a better distance is already found
             if current_dist > distances[current_node]:
                 continue
 
             # Explore neighbors
-            for neighbor, weight, capacity in self.graph[current_node]['connections']:
-                if weight < 0:  # Skip impassable roads
-                    continue
-
+            for neighbor, weight in self.graph[current_node]:
                 new_dist = current_dist + weight
                 if new_dist < distances[neighbor]:
                     distances[neighbor] = new_dist
                     prev_nodes[neighbor] = current_node
                     heapq.heappush(pq, (new_dist, neighbor))
-
-        if distances[target_node] == 999999999:
-            return None
 
         # Reconstruct the path from start to target node
         path = []
@@ -316,16 +310,16 @@ class Graph:
         while prev_nodes[current_node] is not None:
             path.insert(0, current_node)
             current_node = prev_nodes[current_node]
+
         if path:
             path.insert(0, start_node)
 
         return distances[target_node], path
 
-
     def display_important_nodes(self):
         print("Important Nodes:")
         for node in self.graph:
-            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or node in self.assembly_points or node in self.shelter or node in self.collection_points:
+            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or  node in self.shelter or node in self.collection_points:
                 print(f"{node}: {self.graph[node]['type_of_node']}")
         print()
 
@@ -426,9 +420,3 @@ class Graph:
                     print(f"{u} -> {v}: {flow}")
 
         return max_flow
-
-
-
-
-
-
