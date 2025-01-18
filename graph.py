@@ -304,6 +304,9 @@ class Graph:
                     prev_nodes[neighbor] = current_node
                     heapq.heappush(pq, (new_dist, neighbor))
 
+            if distances[target_node] == float('inf'):
+                return None
+
         # Reconstruct the path from start to target node
         path = []
         current_node = target_node

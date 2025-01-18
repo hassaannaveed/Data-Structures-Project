@@ -18,6 +18,7 @@ class F4(Graph):
         self.staging_area = graph.staging_area
 
     def optimal_supply_points(self, current_supply_points, k):
+
         all_nodes = list(self.graph.keys())  # Get all nodes in the graph
         candidate_nodes = [node for node in all_nodes if node not in current_supply_points]
 
