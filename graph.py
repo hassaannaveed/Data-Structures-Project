@@ -1,5 +1,7 @@
 import heapq # For priority queue operations (used in Dijkstra's algorithm)
 from basic import get_matrix # Import the `get_matrix` function for reading matrices from a file
+from itertools import combinations
+import random
 
 class Graph:
 
@@ -11,19 +13,10 @@ class Graph:
 
         # Initialize the lists for important nodes
         self.deployment_sites = []
-        self.assembly_points = []
         self.shelter = []
         self.collection_points = []
 
-        #variables
-        self.total_policemen = 0
-        self.total_firefighters = 0
-        self.total_medics = 0
-
-        self.staging_personnel = []  # To store emergency services personnel
-        self.deployed_personnel = {site: {'policemen': 0, 'firefighters': 0, 'medics': 0} for site in self.deployment_sites}
-        self.waiting_for_personnel = {site: {'policemen': 0, 'firefighters': 0, 'medics': 0} for site in
-                                   self.deployment_sites}
+        self.staging_area = {}  # Holds squads and their skills/resources
 
 
 
@@ -172,11 +165,7 @@ class Graph:
         if type_of_site == 's' or type_of_site == 'r' or type_of_site == 'h' or type_of_site == 'g':
             self.graph[node]['type_of_node'] = type_of_site
         else:
-            if type_of_site == 'd':
-                self.deployment_sites.append(node)
-            elif type_of_site == 'a':
-                self.assembly_points.append(node)
-            elif type_of_site == 'c':
+            if type_of_site == 'c':
                 self.collection_points.append(node)
             elif type_of_site == 'sh':
                 self.shelter.append(node)
@@ -294,75 +283,6 @@ class Graph:
             print("\nNo intersection found.")
 
 
-    def basic_network(self):
-        # Create a new graph with only important nodes
-        important_nodes = [
-            node for node in self.graph
-            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or node in self.assembly_points or node in self.shelter or node in self.collection_points # Add all important nodes
-        ]
-        # Check if there are any important nodes
-        if not important_nodes:
-            print("No important nodes found.")
-            return []
-        # Initialize passable graph for important nodes
-        passable_graph = {node: [] for node in important_nodes}
-
-        # Iterate through all pairs of important nodes
-        for node1 in important_nodes:
-            #Checks every other important node in the graph
-            for node2 in important_nodes:
-                if node1 == node2:
-                    continue  # Skip self-loops
-
-                direct_connection = False
-                #check the connections of the node
-                for connection, weight, _ in self.graph[node1]['connections']:
-                    if connection == node2 and weight > 0:  # Ensure positive weight for passable connections
-                        passable_graph[node1].append((node2, weight))
-                        if (not self.directed) and (node2, node1) not in passable_graph[node2]:
-                            passable_graph[node2].append((node1, weight))
-                        direct_connection = True
-                        break  # No need to continue checking for this pair
-
-                    # If no direct connection exists, use Dijkstra to find the shortest path
-                    if not direct_connection:
-                        result = self.djikstra(node1, node2)
-                        if result:  # If a path exists
-                            distance, _ = result
-                            passable_graph[node1].append((node2, distance))
-                            if (not self.directed) and (node2, node1) not in passable_graph[node2]:
-                                passable_graph[node2].append((node1, distance))
-
-        mst = []
-        visited = set()
-        start_node = important_nodes[0]
-        min_heap = []
-
-        for connections, weight in passable_graph[start_node]:
-            heapq.heappush(min_heap, (weight, start_node, connections))
-
-        visited.add(start_node)
-
-        while min_heap:
-            weight, node1, node2 = heapq.heappop(min_heap)
-
-            if node2 not in visited:
-                visited.add(node2)
-                mst.append((node1, node2, weight))
-
-                for connections, weight in passable_graph[node2]:
-                    if connections not in visited:
-                        heapq.heappush(min_heap, (weight, node2, connections))
-            else:
-                continue
-
-        # Check if all important nodes are connected
-        if len(visited) != len(important_nodes):
-            print("Graph is not fully connected")
-            return []
-
-        return mst
-
     def djikstra(self, start_node, target_node):
         # Min-heap priority queue
         pq = [(0, start_node)]  # (distance, node)
@@ -400,6 +320,14 @@ class Graph:
             path.insert(0, start_node)
 
         return distances[target_node], path
+
+
+    def display_important_nodes(self):
+        print("Important Nodes:")
+        for node in self.graph:
+            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or node in self.assembly_points or node in self.shelter or node in self.collection_points:
+                print(f"{node}: {self.graph[node]['type_of_node']}")
+        print()
 
     def add_super_source_sink(self):
         """
@@ -499,165 +427,8 @@ class Graph:
 
         return max_flow
 
-    def max_flow_collection_to_shelter(self):
-        """
-        Calculates the max flow from collection points to shelters using a super source and super sink.
-        """
-        # Add super source and super sink
-        super_source, super_sink = self.add_super_source_sink()
-
-        # Calculate the max flow
-        max_flow = self.edmonds_karp(super_source, super_sink)
-
-        # Remove the super source and super sink after calculation
-        self.remove_node(super_source)
-        self.remove_node(super_sink)
-
-        print(f"Maximum flow from collection points to shelters: {max_flow}")
-        return max_flow
 
 
-    def display_important_nodes(self):
-        print("Important Nodes:")
-        for node in self.graph:
-            if self.graph[node]['type_of_node'] in ['s', 'r', 'h', 'g'] or node in self.deployment_sites or node in self.assembly_points or node in self.shelter or node in self.collection_points:
-                print(f"{node}: {self.graph[node]['type_of_node']}")
-        print()
 
-    def add_personnel(self, personnel_type, amount, resources):
-        """
-        Adds personnel to the available pool, including their resources.
-        personnel_type: str ('policemen', 'firefighters', or 'medics')
-        amount: int (number of personnel to add)
-        resources: list of str (resources available with the personnel)
-        """
-        for _ in range(amount):
-            person = {'type': personnel_type, 'resources': resources}
-            self.staging_personnel.append(person)
-
-        if personnel_type == 'policemen':
-            self.total_policemen += amount
-        elif personnel_type == 'firefighters':
-            self.total_firefighters += amount
-        elif personnel_type == 'medics':
-            self.total_medics += amount
-        else:
-            print(f"Invalid personnel type: {personnel_type}")
-
-    def _get_group_size(self, personnel_type):
-        """
-        Returns the group size based on the personnel type.
-        Policemen work in groups of 2, firefighters in groups of 4, and medics in groups of 3.
-        """
-        if personnel_type == 'policemen':
-            return 2
-        elif personnel_type == 'firefighters':
-            return 4
-        elif personnel_type == 'medics':
-            return 3
-        else:
-            raise ValueError(f"Invalid personnel type: {personnel_type}")
-
-    def assign_personnel(self, site_name, personnel_type, numofgroups, required_resources):
-        """
-        Assign personnel to a site if resources match; otherwise, update the waiting list.
-        """
-        if site_name not in self.deployment_sites:
-            print(f"Site {site_name} is not a deployment site.")
-            return
-
-        if personnel_type not in self.staging_personnel:
-            print(f"No personnel of type {personnel_type} available in the staging area.")
-            return
-
-        # Filter personnel groups by required resources
-        available_groups = [
-            group for group in self.staging_personnel[personnel_type]
-            if all(resource in group['resources'] for resource in required_resources)
-        ]
-
-        if len(available_groups) < numofgroups:
-            print(f"Not enough qualified personnel groups. Updating waiting list for {site_name}.")
-            self.waiting_for_personnel[site_name][personnel_type] += numofgroups
-            return
-
-        # Deploy personnel to the site
-        for _ in range(numofgroups):
-            deployed_group = available_groups.pop(0)
-            self.staging_personnel[personnel_type].remove(deployed_group)
-
-        self.deployed_personnel[site_name][personnel_type] += numofgroups
-        print(f"Assigned {numofgroups} group(s) of {personnel_type} to {site_name}.")
-
-    def release_personnel(self, site_name, personnel_type, numofgroups):
-        """
-        Release personnel from a deployment site and check the waiting list for reassignment.
-        site_name: str (the deployment site name)
-        personnel_type: str ('policemen', 'firefighters', or 'medics')
-        numofgroups: int (number of groups to release)
-        """
-        group_size = self._get_group_size(personnel_type)
-        total_personnel_to_release = group_size * numofgroups
-
-        # Check if there are enough personnel to release
-        if self.deployed_personnel[site_name][personnel_type] >= total_personnel_to_release:
-            self.deployed_personnel[site_name][personnel_type] -= total_personnel_to_release
-            for _ in range(total_personnel_to_release):
-                # Add released personnel back to the staging area
-                self.staging_personnel.append(
-                    {'type': personnel_type, 'resources': []})  # User defines resources when adding
-
-            print(f"Released {total_personnel_to_release} {personnel_type}(s) from {site_name}.")
-
-            # Re-check the waiting list for deployment
-            self.check_waiting_sites()
-        else:
-            print(
-                f"Error: Not enough {personnel_type}(s) deployed at {site_name} to release {total_personnel_to_release}.")
-
-    def check_waiting_sites(self):
-        """
-        Check if any waiting deployment sites can now be fulfilled.
-        """
-        for site_name, waiting in self.waiting_for_personnel.items():
-            for personnel_type, required in waiting.items():
-                if required > 0:
-                    group_size = self._get_group_size(personnel_type)
-                    num_of_groups = (required + group_size - 1) // group_size  # Calculate required groups
-                    required_resources = []  # Resources are entered when personnel are added by the user
-
-                    self.assign_personnel(site_name, personnel_type, num_of_groups, required_resources)
-
-                    # Reduce the waiting list if personnel were assigned
-                    assigned_personnel = min(required, num_of_groups * group_size)
-                    waiting[personnel_type] -= assigned_personnel
-
-
-    def display_waiting_status(self):
-        """
-        Display the current waiting status for each deployment site.
-        """
-        print("Waiting for personnel:")
-        for site, waiting in self.waiting_for_personnel.items():
-            for personnel_type, count in waiting.items():
-                if count > 0:
-                    print(f"{site} is waiting for {count} {personnel_type}(s) in groups.")
-
-    def display_staging_area(self):
-        """Display the available emergency services in the staging area."""
-        if not self.staging_personnel:
-            print("No emergency services available in the staging area.")
-            return
-
-        print("Staging Area Personnel:")
-        for person in self.staging_personnel:
-            print(
-                f"Type: {person['type']}, Resources: {', '.join(person['resources'])}")
-
-    def display_total_personnel(self):
-        """Display the total number of available personnel."""
-        print(f"Total Policemen: {self.total_policemen}")
-        print(f"Total Firefighters: {self.total_firefighters}")
-        print(f"Total Medics: {self.total_medics}")
 
 

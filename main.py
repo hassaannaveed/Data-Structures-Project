@@ -1,5 +1,11 @@
 from basic import get_matrix, is_directed, is_weighted
 from graph import Graph
+from f1 import F1
+from f2 import F2
+from f3 import F3
+from f4 import F4
+from f5 import F5
+
 
 filename = input("Enter the filename to be read: ")
 
@@ -25,6 +31,11 @@ graph.add_from_adj_matrix(adj_matrix)
 print("Graph has been created successfully.")
 print("Graph is directed: ", graph.directed)
 print("Graph is weighted: ", graph.weighted)
+f1 = F1(graph)
+f2 = F2(graph)
+f3 = F3(graph)
+f4 = F4(graph)
+f5 = F5(graph)
 ans = 'y'
 
 while ans=='y':
@@ -41,12 +52,11 @@ while ans=='y':
     print("10. Enter a collection point for evacuation")
     print("11. Enter the capacity of a road")
     print("12. Enter the capacity of all nodes through a file")
-    print("13. Evaluate the evacuation plan")
-    print("14. Enter the total number of emergency services personnel")
-    print("15. Request personnel for a specific location")
-    print("16. Release personnel from a specific location")
-    print("17. Check waiting sites")
-    print("18. Exit")
+    print("13. Calculate the fastest route between two nodes")
+    print("14. Determine optimal locations for additional supply points")
+    print("15. Evaluate the evacuation plan")
+    print("16. F5")
+    print("17. Exit")
     print("******************")
 
     choice = input("Enter your choice: ")
@@ -159,7 +169,7 @@ while ans=='y':
                 print("Invalid choice. Please try again.")
                 ans = input("Do you want to continue? (y/n): ")
             continue
-        mst = graph.basic_network()
+        mst = f1.basic_network()
         print("The Basic Network:")
         for node1, node2, weight in mst:
             print(f"{node1} - {node2} (Cost: {weight})")
@@ -196,8 +206,30 @@ while ans=='y':
             ans = input("Do you want to continue? (y/n): ")
 
     elif choice == '13':
+        source = input("Enter the source node: ")
+        destination = input("Enter the destination node: ")
+        result = F3.calculate_fastest_route(source, destination)
+        if result:
+            distance, path = result
+            print(f"The fastest route from {source} to {destination} is: {' -> '.join(path)}")
+            print(f"Total distance: {distance}")
+        ans = input("Do you want to continue? (y/n): ")
+        while ans not in ['y', 'n']:
+            print("Invalid choice. Please try again.")
+            ans = input("Do you want to continue? (y/n): ")
+    elif choice == '14':
+        current_supply_points = input("Enter current supply points (comma-separated): ").split(',')
+        k = int(input("Enter the number of additional supply points: "))
+        additional_supply_points = F4.optimal_supply_points(current_supply_points, k)
+        if additional_supply_points:
+            print("Recommended additional supply points:", ", ".join(additional_supply_points))
+        ans = input("Do you want to continue? (y/n): ")
+    elif choice == '15':
+        #Only works for weighted and directed graphs
         if graph.weighted and graph.directed:
-            graph.max_flow_collection_to_shelter()
+            #The output will only show the number of people that can be evacuated
+            #the system assumes that the number os buses are enough for evacuation
+            f2.max_flow_collection_to_shelter()
         else:
             print("Graph is either unweighted or undirected. Cannot carry the operation.")
 
@@ -206,86 +238,66 @@ while ans=='y':
             print("Invalid choice. Please try again.")
             ans = input("Do you want to continue? (y/n): ")
 
-    elif choice == '14':
-        personnel = input("Enter policemen, firefighters or medics: ")
-        while personnel not in ['policemen', 'firefighters', 'medics']:
-            print("Invalid choice. Please try again.")
-            personnel = input("Enter policemen, firefighters or medics: ")
-        num_personnel = int(input("Enter the number of personnel: "))
-        resources = input("Enter the resources available for the personnel: ")
-        graph.add_personnel(personnel, num_personnel, resources)
-        ans = input("Do you want to continue? (y/n): ")
-        while ans not in ['y', 'n']:
-            print("Invalid choice. Please try again.")
-            ans = input("Do you want to continue? (y/n): ")
+    elif choice == '16':
+        # Step 1: Get deployment sites from the user
+        num_sites = int(input("Enter the number of deployment sites: "))
 
+        for _ in range(num_sites):
+            site_name = input("Enter the deployment site name: ")
+            required_skills = input("Enter required skills for the site (comma separated): ").split(',')
+            required_resources = input("Enter required resources for the site (comma separated): ").split(',')
+            required_people = int(input("Enter the number of people needed for the site: "))
 
-    elif choice == '15':  # Request personnel for a specific location
+            # Clean up input (strip spaces)
+            required_skills = {skill.strip() for skill in required_skills}
+            required_resources = {resource.strip() for resource in required_resources}
 
-        site_name = input("Enter the location to request personnel: ")
-        personnel_type = input("Enter the type of personnel (policemen, firefighters, medics): ")
-        while personnel_type not in ['policemen', 'firefighters', 'medics']:
-            print("Invalid type. Please try again.")
+            # Add deployment site
+            f5.add_deployment_site(site_name, required_skills, required_resources, required_people)
 
-            personnel_type = input("Enter the type of personnel (policemen, firefighters, medics): ")
-        num_of_groups = int(input("Enter the number of groups needed: "))
+        # Step 2: Get squads from the user
+        num_squads = int(input("Enter the number of squads: "))
 
-        required_resources = input("Enter the required resources for the personnel (comma-separated): ").split(',')
+        for _ in range(num_squads):
+            squad_name = input("Enter the squad name: ")
+            squad_skills = input("Enter the skills of the squad (comma separated): ").split(',')
+            squad_resources = input("Enter the resources of the squad (comma separated): ").split(',')
+            squad_members = int(input("Enter the number of members in the squad: "))
 
-        graph.assign_personnel(site_name, personnel_type, num_of_groups, required_resources)
+            # Clean up input (strip spaces)
+            squad_skills = {skill.strip() for skill in squad_skills}
+            squad_resources = {resource.strip() for resource in squad_resources}
 
-        print(f"Requested {num_of_groups} group(s) of {personnel_type} for {site_name}.")
+            # Add squad to staging area
+            f5.add_squad_to_staging_area(squad_name, squad_skills, squad_resources, squad_members)
 
-        ans = input("Do you want to continue? (y/n): ")
+        # Step 3: Assign squads to deployment sites based on user input
+        print("\nAssign squads to deployment sites.")
+        for site_name in graph.deployment_sites:  # Only iterate over deployment sites
+            squad_name = input(f"Enter the squad name to assign to {site_name}: ")
+            f5.assign_squad_to_deployment(site_name, squad_name)
 
-        while ans not in ['y', 'n']:
-            print("Invalid choice. Please try again.")
+        # Step 4: Deploy emergency services (matching squads to sites)
+        print("\nDeploying emergency services...")
+        deployment_sites = {}
 
-            ans = input("Do you want to continue? (y/n): ")
+        for site_name in graph.deployment_sites:  # Use only deployment sites
+            required_skills = graph.graph[site_name].get('required_skills', set())
+            required_resources = graph.graph[site_name].get('required_resources', set())
+            deployment_sites[site_name] = (required_skills, required_resources)
 
+        matching = f5.deploy_emergency_services(deployment_sites)
 
-    elif choice == '16':  # Release personnel from a specific location
+        # Step 5: Display the deployment plan
+        print("\nDeployment Plan:")
+        for site, squad in matching.items():
+            print(f"Deployment Site {site} <- Squad {squad}")
 
-        site_name = input("Enter the location to release personnel from: ")
+        print(f"\nTotal squads deployed: {len(matching)}")
 
-        personnel_type = input("Enter the type of personnel to release (policemen, firefighters, medics): ")
-
-        while personnel_type not in ['policemen', 'firefighters', 'medics']:
-            print("Invalid type. Please try again.")
-
-            personnel_type = input("Enter the type of personnel to release (policemen, firefighters, medics): ")
-
-        num_of_groups = int(input("Enter the number of groups to release: "))
-
-        graph.release_personnel(site_name, personnel_type, num_of_groups)
-
-        print(f"Released {num_of_groups} group(s) of {personnel_type} from {site_name}.")
-
-        ans = input("Do you want to continue? (y/n): ")
-
-        while ans not in ['y', 'n']:
-            print("Invalid choice. Please try again.")
-
-            ans = input("Do you want to continue? (y/n): ")
 
 
     elif choice == '17':
-
-        print("Checking waiting sites for personnel...")
-
-        graph.check_waiting_sites()
-
-        print("Waiting sites have been processed.")
-
-        ans = input("Do you want to continue? (y/n): ")
-
-        while ans not in ['y', 'n']:
-            print("Invalid choice. Please try again.")
-
-            ans = input("Do you want to continue? (y/n): ")
-
-
-    elif choice == '18':
         print("Exiting...")
         break
 
