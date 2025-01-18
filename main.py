@@ -2,6 +2,7 @@ from basic import get_matrix, is_directed, is_weighted
 from graph import Graph
 from f1 import F1
 from f2 import F2
+from f3 import F3
 from f4 import F4
 from f5 import F5
 
@@ -32,6 +33,7 @@ print("Graph is directed: ", graph.directed)
 print("Graph is weighted: ", graph.weighted)
 f1 = F1(graph)
 f2 = F2(graph)
+f3 = F3(graph)
 f4 = F4(graph)
 f5 = F5(graph)
 ans = 'y'
@@ -220,7 +222,7 @@ while ans=='y':
     elif choice == '14':
         source = input("Enter the source node: ")
         destination = input("Enter the destination node: ")
-        result = graph.djikstra(source, destination)
+        result = f3.djikstra(source, destination)
         if result:
             distance, path = result
             print(f"The fastest route from {source} to {destination} is: {' -> '.join(path)}")
